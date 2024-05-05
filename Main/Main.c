@@ -24,6 +24,7 @@ void *userInterfaceThread(void *arg);
 char keypressed[10];
 char prevkeypressed[10];
 
+void initOpenGL();
 // Function to load texture from file
 void loadTexture(const char *filename, GLuint *textureID)
 {
@@ -97,7 +98,6 @@ void printPosition()
 //         {
 //             float xHorizontalWalls[] = {20, 251.50, 320, 550, 20, 120, 450, 555, 125, 255, 325, 440, 195, 375, 195, 375, 130, 250, 325, 440, 195, 375, 25, 120, 450, 545, 25, 120, 130, 245, 325, 440, 450, 545, 252, 320};
 //             float yHorizontalWalls[] = {60.5, 134, 60.5, 134, 200, 264, 200, 264, 200, 264, 200, 264, 135, 199, 265, 325, 470, 534, 470, 534, 535, 599, 535, 599, 535, 599, 600, 680, 600, 680, 600, 680, 600, 680, 60.5, 135};
-
 //             int numElements = sizeof(xHorizontalWalls) / sizeof(xHorizontalWalls[0]);
 //             printf("%d", numElements);
 //             for (int i = 0; i < numElements; i += 2)
@@ -141,7 +141,7 @@ bool isWallCollide(bool moveAxis, float xx, float yy) // 0 for x axis movement
         for (int i = 0; i < numElements; i++)
             if (yy == xPath[i])
             {
-                printf("NOT COLLIIIDDE %d\n", numElementsToFrom);
+                // printf("NOT COLLIIIDDE %d\n", numElementsToFrom);
                 int j;
                 if (i == 0)
                 {
@@ -196,35 +196,44 @@ bool isWallCollide(bool moveAxis, float xx, float yy) // 0 for x axis movement
 }
 
 // Function to handle keyboard input
-void keyboard(int key, float xx, float yy)
+void keyboard(int key)
 {
-    float newX = x;
-    float newY = y;
+    int newX = x;
+    int newY = y;
     switch (key)
     {
     case GLUT_KEY_RIGHT:
-        strcpy(prevkeypressed, keypressed);
-        strcpy(keypressed, "right");
-        pacmanTexturePath = "imgs/pacman/right.png";
-
+        newX += 0.5;
+        if (isWallCollide(0, newX, newY) == false) 
+        {
+            pacmanTexturePath = "imgs/pacman/right.png";
+            strcpy(keypressed, "right");
+        }
         break;
     case GLUT_KEY_LEFT:
-        strcpy(prevkeypressed, keypressed);
-        pacmanTexturePath = "imgs/pacman/left.png";
-        strcpy(keypressed, "left");
+        newX -= 0.5;
+        if (isWallCollide(0, newX, newY) == false) 
+        {
+            pacmanTexturePath = "imgs/pacman/left.png";
+            strcpy(keypressed, "left");
+        }
 
         break;
     case GLUT_KEY_UP:
-        strcpy(prevkeypressed, keypressed);
-        pacmanTexturePath = "imgs/pacman/down.png";
-        strcpy(keypressed, "up");
-
+        newY -= 0.5;
+        if (isWallCollide(0, newX, newY) == false) 
+        {
+            pacmanTexturePath = "imgs/pacman/down.png";
+            strcpy(keypressed, "down");
+        }
         break;
     case GLUT_KEY_DOWN:
-        strcpy(prevkeypressed, keypressed);
-        pacmanTexturePath = "imgs/pacman/up.png";
-        strcpy(keypressed, "down");
-
+        newY += 0.5;
+        if (isWallCollide(0, newX, newY) == false) 
+        {
+            pacmanTexturePath = "imgs/pacman/up.png";
+            strcpy(keypressed, "up");
+        }
         break;
     }
     // Reload the texture with the new filename
@@ -270,105 +279,50 @@ int main(int argc, char **argv)
 
 void *gameEngineThread(void *arg)
 {
-    glutSpecialFunc(keyboard);
 
+    glutDisplayFunc(display);
     // Initialize game engine
     while (1)
     {
-        if (!stoppac)
+
+        float newX = x;
+        float newY = y;
+
+        if (strcmp(keypressed, "down") == 0 )
         {
-            float newX = x;
-            float newY = y;
-
-            if (strcmp(keypressed, "down") == 0)
+            newY += 0.5;
+            if (isWallCollide(0, newX, newY) == false) 
             {
-                newY += 0.5;
-                // if (isWallCollide(newX, newY) == false)
-                // {
-                //     // pacmanTexturePath = "imgs/pacman/down.png";
-                //     y += 0.5;
-                // }
-                // else
-                // {
-                //     strcpy(keypressed, prevkeypressed);
-                // }
-                if (isWallCollide(1, newX, newY))
-                {
-                    strcpy(keypressed, prevkeypressed);
-                }
-                else
-                {
-                    y += 0.5;
-                }
+                y += 0.5;
             }
-            else if (strcmp(keypressed, "up") == 0)
-            {
-                newY -= 0.5;
-                // if (isWallCollide(newX, newY) == false)
-                // {
-                //     // pacmanTexturePath = "imgs/pacman/up.png";
-                //     y -= 0.5;
-                // }
-                // else
-                // {
-                //     strcpy(keypressed, prevkeypressed);
-                // }
-
-                if (isWallCollide(1, newX, newY))
-                {
-                    strcpy(keypressed, prevkeypressed);
-                }
-                else
-                {
-                    y -= 0.5;
-                }
-            }
-            else if (strcmp(keypressed, "left") == 0)
-            {
-                newX -= 0.5;
-                // if (isWallCollide(newX, newY) == false)
-                // {
-
-                //     // pacmanTexturePath = "imgs/pacman/left.png";
-                //     x -= 0.5;
-                // }
-                // else
-                //     strcpy(keypressed, prevkeypressed);
-
-                if (isWallCollide(0, newX, newY))
-                {
-                    strcpy(keypressed, prevkeypressed);
-                }
-                else
-                {
-                    x -= 0.5;
-                }
-            }
-            else if (strcmp(keypressed, "right") == 0)
-            {
-                newX += 0.5;
-                // if (isWallCollide(newX, newY) == false)
-                // {
-
-                //     // pacmanTexturePath = "imgs/pacman/right.png";
-                //     x += 0.5;
-                // }
-                // else
-                //     strcpy(keypressed, prevkeypressed);
-                if (isWallCollide(0, newX, newY))
-                {
-                    strcpy(keypressed, prevkeypressed);
-                }
-                else
-                {
-                    x += 0.5;
-                }
-            }
-
-            printPosition();
-            glutDisplayFunc(display);
-            glutPostRedisplay(); // Request redisplay
+            
         }
+        else if (strcmp(keypressed, "up") == 0)
+        {
+            newY -= 0.5;
+            if (isWallCollide(0, newX, newY) == false) 
+            {
+                y -= 0.5;
+            }
+        }
+        else if (strcmp(keypressed, "left") == 0)
+        {
+            newX -= 0.5;
+            if (isWallCollide(0, newX, newY) == false) 
+            {
+                x -= 0.5;
+            }
+        }
+        else if (strcmp(keypressed, "right") == 0)
+        {
+            newX += 0.5;
+            if (isWallCollide(0, newX, newY) == false) 
+            {
+                x += 0.5;
+            }
+        }
+        // printPosition();
+        glutPostRedisplay(); // Request redisplay
         usleep(5000);
     }
     pthread_exit(NULL);
@@ -378,6 +332,7 @@ void *gameEngineThread(void *arg)
 void *userInterfaceThread(void *arg)
 {
     // Initialize user interface
+    glutSpecialFunc(keyboard);
     while (1)
     {
     }
