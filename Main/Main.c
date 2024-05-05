@@ -229,6 +229,7 @@ int main(int argc, char **argv)
     return 0;
 }
 bool delayFlag = false;
+
 void *gameEngineThread(void *arg)
 {
     glutSpecialFunc(keyboard);
