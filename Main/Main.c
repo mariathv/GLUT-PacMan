@@ -4,9 +4,9 @@
 #include <pthread.h>
 #include <string.h>
 #include <stdbool.h>
-
-// Global variables for texture, position, and size
-//using my code here Hussnain
+// YAAANNNN
+//  Global variables for texture, position, and size
+// using my code here Hussnain
 bool stoppac;
 GLuint pacmanTextureID;
 GLuint backgroundTextureID;
