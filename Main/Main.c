@@ -22,9 +22,13 @@ void *gameEngineThread(void *arg);
 void *userInterfaceThread(void *arg);
 
 char keypressed[10];
+char delayKey[10];
 char prevkeypressed[10];
 
-void initOpenGL();
+int delayTurn = 50;
+int delayTimer = 0;
+bool delayFlag = false;
+
 // Function to load texture from file
 void loadTexture(const char *filename, GLuint *textureID)
 {
@@ -87,61 +91,19 @@ void printPosition()
     printf("position: (%.2f, %.2f)\n", x, y);
 }
 
-// bool isWallCollide(float xx, float yy)
-// {
-//     int mapBordersY[2] = {60, 685};
-//     int mapBordersX[2] = {20, 555};
-//     // hehehehehe
-//     if (xx >= mapBordersX[0] && xx <= mapBordersX[1])
-//     {
-//         if (yy >= mapBordersY[0] && yy <= mapBordersY[1])
-//         {
-//             float xHorizontalWalls[] = {20, 251.50, 320, 550, 20, 120, 450, 555, 125, 255, 325, 440, 195, 375, 195, 375, 130, 250, 325, 440, 195, 375, 25, 120, 450, 545, 25, 120, 130, 245, 325, 440, 450, 545, 252, 320};
-//             float yHorizontalWalls[] = {60.5, 134, 60.5, 134, 200, 264, 200, 264, 200, 264, 200, 264, 135, 199, 265, 325, 470, 534, 470, 534, 535, 599, 535, 599, 535, 599, 600, 680, 600, 680, 600, 680, 600, 680, 60.5, 135};
-//             int numElements = sizeof(xHorizontalWalls) / sizeof(xHorizontalWalls[0]);
-//             printf("%d", numElements);
-//             for (int i = 0; i < numElements; i += 2)
-//             {
-//                 if (xx > xHorizontalWalls[i] && xx < xHorizontalWalls[i + 1])
-//                 {
-//                     // printf("pass\n");
-//                     if (yy >= yHorizontalWalls[i] && yy <= yHorizontalWalls[i + 1])
-//                     {
-//                         // printf("collide\n");
-//                         return true;
-//                     }
-//                 }
-//             }
-//             strcpy(prevkeypressed, keypressed);
-//         }
-//         else
-//         {
-//             strcpy(prevkeypressed, keypressed);
-//             return true;
-//         }
-//     }
-//     else
-//     {
-//         strcpy(prevkeypressed, keypressed);
-//         return true;
-//     }
-
-//     return false;
-// }
-
 bool isWallCollide(bool moveAxis, float xx, float yy) // 0 for x axis movement
 {
     bool errFlag = true;
-    if (moveAxis == 0)
+    if (moveAxis == 0) // Horizontal
     {
-        int xPath[] = {60, 128};
-        int toFrom[] = {20, 555, 20, 125};
+        int xPath[] = {60, 128, 685, 531, 596, 685, 531, 128, 395, 262, 195, 128, 128};
+        int toFrom[] = {20, 555, 20, 125, 20, 254, 20, 125, 20, 555, 319, 555, 447, 555, 447, 555, 10, 165, 300, 555, 125, 447, 200, 283, 317, 350};
         int numElements = sizeof(xPath) / sizeof(xPath[0]);
         int numElementsToFrom = sizeof(toFrom) / sizeof(toFrom[0]);
         for (int i = 0; i < numElements; i++)
             if (yy == xPath[i])
             {
-                // printf("NOT COLLIIIDDE %d\n", numElementsToFrom);
+                
                 int j;
                 if (i == 0)
                 {
@@ -154,19 +116,20 @@ bool isWallCollide(bool moveAxis, float xx, float yy) // 0 for x axis movement
 
                 if (xx >= toFrom[j] && xx <= toFrom[j + 1])
                 {
+                    // printf("NOT COLLIIIDDE %d\n", numElementsToFrom);
                     return false;
                 }
             }
         if (errFlag)
         {
-            strcpy(prevkeypressed, keypressed);
+            // strcpy(prevkeypressed, keypressed);
             return true;
         }
     }
-    else
+    else // Vertical
     {
-        int YPath[] = {20, 61};
-        int toFrom[] = {60, 128, 128, 180};
+        int YPath[] = {20, 61, 125, 20, 254, 555, 319, 447, 555, 509, 253, 317};
+        int toFrom[] = {60, 128, 128, 195, 128, 685, 531, 685, 596, 685, 531, 685, 596, 685, 128, 685, 60, 128, 128, 195, 60, 128, 60, 128};
         int numElements = sizeof(YPath) / sizeof(YPath[0]);
         int numElementsToFrom = sizeof(toFrom) / sizeof(toFrom[0]);
         for (int i = 0; i < numElements; i++)
@@ -184,12 +147,13 @@ bool isWallCollide(bool moveAxis, float xx, float yy) // 0 for x axis movement
 
                 if (yy >= toFrom[j] && yy <= toFrom[j + 1])
                 {
+                    // printf("NOT COLLIIIDDE %d\n", numElementsToFrom);
                     return false;
                 }
             }
         if (errFlag)
         {
-            strcpy(prevkeypressed, keypressed);
+            // strcpy(prevkeypressed, keypressed);
             return true;
         }
     }
@@ -198,8 +162,8 @@ bool isWallCollide(bool moveAxis, float xx, float yy) // 0 for x axis movement
 // Function to handle keyboard input
 void keyboard(int key)
 {
-    int newX = x;
-    int newY = y;
+    float newX = x;
+    float newY = y;
     switch (key)
     {
     case GLUT_KEY_RIGHT:
@@ -208,6 +172,7 @@ void keyboard(int key)
         {
             pacmanTexturePath = "imgs/pacman/right.png";
             strcpy(keypressed, "right");
+    
         }
         break;
     case GLUT_KEY_LEFT:
@@ -221,18 +186,20 @@ void keyboard(int key)
         break;
     case GLUT_KEY_UP:
         newY -= 0.5;
-        if (isWallCollide(0, newX, newY) == false) 
+        if (isWallCollide(1, newX, newY) == false) 
         {
             pacmanTexturePath = "imgs/pacman/down.png";
-            strcpy(keypressed, "down");
+            strcpy(keypressed, "up");
+             y -= 0.5;
         }
         break;
     case GLUT_KEY_DOWN:
         newY += 0.5;
-        if (isWallCollide(0, newX, newY) == false) 
+        if (isWallCollide(1, newX, newY) == false) 
         {
             pacmanTexturePath = "imgs/pacman/up.png";
-            strcpy(keypressed, "up");
+            strcpy(keypressed, "down");
+            y += 0.5;
         }
         break;
     }
@@ -276,14 +243,22 @@ int main(int argc, char **argv)
 
     return 0;
 }
-
+bool delayFlag = false;
 void *gameEngineThread(void *arg)
 {
 
     glutDisplayFunc(display);
+    glutSpecialFunc(keyboard);
     // Initialize game engine
     while (1)
     {
+        if (delayFlag)
+        {
+            delayTimer++;
+            if (delayTimer > delayTurn)
+                delayTimer = 0;
+            delayFlag = false;
+        }
 
         float newX = x;
         float newY = y;
@@ -291,16 +266,16 @@ void *gameEngineThread(void *arg)
         if (strcmp(keypressed, "down") == 0 )
         {
             newY += 0.5;
-            if (isWallCollide(0, newX, newY) == false) 
+            if (isWallCollide(1, newX, newY) == false) 
             {
                 y += 0.5;
-            }
-            
+
+            } 
         }
         else if (strcmp(keypressed, "up") == 0)
         {
             newY -= 0.5;
-            if (isWallCollide(0, newX, newY) == false) 
+            if (isWallCollide(1, newX, newY) == false) 
             {
                 y -= 0.5;
             }
@@ -332,7 +307,7 @@ void *gameEngineThread(void *arg)
 void *userInterfaceThread(void *arg)
 {
     // Initialize user interface
-    glutSpecialFunc(keyboard);
+    
     while (1)
     {
     }
