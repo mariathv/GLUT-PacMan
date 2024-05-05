@@ -98,27 +98,101 @@ void printPosition()
 //             float xHorizontalWalls[] = {20, 251.50, 320, 550, 20, 120, 450, 555, 125, 255, 325, 440, 195, 375, 195, 375, 130, 250, 325, 440, 195, 375, 25, 120, 450, 545, 25, 120, 130, 245, 325, 440, 450, 545, 252, 320};
 //             float yHorizontalWalls[] = {60.5, 134, 60.5, 134, 200, 264, 200, 264, 200, 264, 200, 264, 135, 199, 265, 325, 470, 534, 470, 534, 535, 599, 535, 599, 535, 599, 600, 680, 600, 680, 600, 680, 600, 680, 60.5, 135};
 
-int numElements = sizeof(xHorizontalWalls) / sizeof(xHorizontalWalls[0]);
-printf("%d", numElements);
-for (int i = 0; i < numElements; i += 2)
+//             int numElements = sizeof(xHorizontalWalls) / sizeof(xHorizontalWalls[0]);
+//             printf("%d", numElements);
+//             for (int i = 0; i < numElements; i += 2)
+//             {
+//                 if (xx > xHorizontalWalls[i] && xx < xHorizontalWalls[i + 1])
+//                 {
+//                     // printf("pass\n");
+//                     if (yy >= yHorizontalWalls[i] && yy <= yHorizontalWalls[i + 1])
+//                     {
+//                         // printf("collide\n");
+//                         return true;
+//                     }
+//                 }
+//             }
+//             strcpy(prevkeypressed, keypressed);
+//         }
+//         else
+//         {
+//             strcpy(prevkeypressed, keypressed);
+//             return true;
+//         }
+//     }
+//     else
+//     {
+//         strcpy(prevkeypressed, keypressed);
+//         return true;
+//     }
+
+//     return false;
+// }
+
+bool isWallCollide(bool moveAxis, float xx, float yy) // 0 for x axis movement
 {
-    if (xx > xHorizontalWalls[i] && xx < xHorizontalWalls[i + 1])
+    bool errFlag = true;
+    if (moveAxis == 0) // Horizontal
     {
-        // printf("pass\n");
-        if (yy >= yHorizontalWalls[i] && yy <= yHorizontalWalls[i + 1])
+        int xPath[] = {60, 128, 685, 531, 596};
+        int toFrom[] = {20, 555, 20, 125, 20, 254, 20, 125, 20, 555};
+        int numElements = sizeof(xPath) / sizeof(xPath[0]);
+        int numElementsToFrom = sizeof(toFrom) / sizeof(toFrom[0]);
+        for (int i = 0; i < numElements; i++)
+            if (yy == xPath[i])
+            {
+                printf("NOT COLLIIIDDE %d\n", numElementsToFrom);
+                int j;
+                if (i == 0)
+                {
+                    j = 0;
+                }
+                else
+                {
+                    j = i * 2;
+                }
+
+                if (xx >= toFrom[j] && xx <= toFrom[j + 1])
+                {
+                    return false;
+                }
+            }
+        if (errFlag)
         {
-            // printf("collide\n");
+            strcpy(prevkeypressed, keypressed);
             return true;
         }
     }
-}
-}
-else return true;
-}
-}
-else return true;
+    else // Vertical
+    {
+        int YPath[] = {20, 61, 125, 20, 254};
+        int toFrom[] = {60, 128, 128, 180, 128, 685, 531, 685, 596, 685};
+        int numElements = sizeof(YPath) / sizeof(YPath[0]);
+        int numElementsToFrom = sizeof(toFrom) / sizeof(toFrom[0]);
+        for (int i = 0; i < numElements; i++)
+            if (xx == YPath[i])
+            {
+                int j;
+                if (i == 0)
+                {
+                    j = 0;
+                }
+                else
+                {
+                    j = i * 2;
+                }
 
-return false;
+                if (yy >= toFrom[j] && yy <= toFrom[j + 1])
+                {
+                    return false;
+                }
+            }
+        if (errFlag)
+        {
+            strcpy(prevkeypressed, keypressed);
+            return true;
+        }
+    }
 }
 
 // Function to handle keyboard input
