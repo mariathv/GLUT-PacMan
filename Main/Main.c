@@ -9,6 +9,7 @@
 #include <pthread.h>
 #include <string.h>
 #include <stdbool.h>
+#include <time.h>
 // YAAANNNN
 //  Global variables for texture, position, and size
 // using my code here Hussnain
@@ -19,10 +20,19 @@ GLuint pacmanDown;
 GLuint pacmanUp;
 GLuint backgroundTextureID;
 GLuint foodTextureID;
+GLuint ghostTextureID[2];
 
 float x = 280.0f;
 float y = 195.0f;
 float side = 30.0f;
+
+
+float ghostX[2] = {
+    256,
+    270};
+float ghostY[2] = {466, 466};
+int numGhost = 2;
+char ghostMovement[2][10];
 
 float foody = 60.0f;
 float foodx = 20.0f; // Adjusted the size for clarity
@@ -36,6 +46,7 @@ bool *checkFoodEatArr ;
 
 void *gameEngineThread(void *arg);
 void *userInterfaceThread(void *arg);
+void *ghostThread(void *arg);
 
 char triedKeyPressed[10];
 int delayTimer = 0;
@@ -126,6 +137,36 @@ void display()
     glEnd();
     glDisable(GL_TEXTURE_2D);
 
+    // Draw Ghost PINKY
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, ghostTextureID[0]);
+    glBegin(GL_QUADS);
+    glTexCoord2f(1, 1);
+    glVertex2f(ghostX[0], ghostY[0]);
+    glTexCoord2f(0, 1);
+    glVertex2f(ghostX[0] + side, ghostY[0]);
+    glTexCoord2f(0, 0);
+    glVertex2f(ghostX[0] + side, ghostY[0] + (side * 1.0f)); // Adjusted the height of the quad
+    glTexCoord2f(1, 0);
+    glVertex2f(ghostX[0], ghostY[0] + (side * 1.0f)); // Adjusted the height of the quad
+    glEnd();
+    glDisable(GL_TEXTURE_2D);
+
+    // DRAW GHOST CLYDE
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, ghostTextureID[1]);
+    glBegin(GL_QUADS);
+    glTexCoord2f(1, 1);
+    glVertex2f(ghostX[1], ghostY[1]);
+    glTexCoord2f(0, 1);
+    glVertex2f(ghostX[1] + side, ghostY[1]);
+    glTexCoord2f(0, 0);
+    glVertex2f(ghostX[1] + side, ghostY[1] + (side * 1.0f)); // Adjusted the height of the quad
+    glTexCoord2f(1, 0);
+    glVertex2f(ghostX[1], ghostY[1] + (side * 1.0f)); // Adjusted the height of the quad
+    glEnd();
+    glDisable(GL_TEXTURE_2D);
+
     glutSwapBuffers();
 }
 
@@ -140,7 +181,6 @@ void checkfoodEat()
     {
         if(arrFoodx[i] == x && arrFoody[i] == y && checkFoodEatArr[i] == false)
         {
-            printf("Food Eaten\n");
             checkFoodEatArr[i] = true;
         }
     }
@@ -342,6 +382,8 @@ void initOpenGL()
     loadTexture("imgs/pacman/down.png", &pacmanDown);
     loadTexture("imgs/map/map.png", &backgroundTextureID);
     loadTexture("imgs/food/dot.png", &foodTextureID);
+    // loadTexture("imgs/ghosts/pinky.png", &ghostTextureID[0]);
+    // loadTexture("imgs/ghosts/clyde.png", &ghostTextureID[1]);
 }
 
 int main(int argc, char **argv)
@@ -358,9 +400,10 @@ int main(int argc, char **argv)
 
     pthread_mutex_init(&lock, NULL);
 
-    pthread_t EngineThread, playerThread;
+    pthread_t EngineThread, playerThread, GhostThread;
     pthread_create(&EngineThread, NULL, gameEngineThread, NULL);
     pthread_create(&playerThread, NULL, userInterfaceThread, NULL);
+    pthread_create(&GhostThread, NULL, ghostThread, NULL);
     glutMainLoop();
 
     return 0;
@@ -392,7 +435,7 @@ void *gameEngineThread(void *arg)
             if (isWallCollide(1, newX, newY) == false)
             {
                 y += 0.5;
-                printPosition();
+                // printPosition();
             }
         }
         else if (strcmp(keypressed, "up") == 0)
@@ -401,7 +444,7 @@ void *gameEngineThread(void *arg)
             if (isWallCollide(1, newX, newY) == false)
             {
                 y -= 0.5;
-                printPosition();
+                // printPosition();
             }
         }
         else if (strcmp(keypressed, "left") == 0)
@@ -410,7 +453,7 @@ void *gameEngineThread(void *arg)
             if (isWallCollide(0, newX, newY) == false)
             {
                 x -= 0.5;
-                printPosition();
+                // printPosition();
             }
         }
         else if (strcmp(keypressed, "right") == 0)
@@ -419,16 +462,143 @@ void *gameEngineThread(void *arg)
             if (isWallCollide(0, newX, newY) == false)
             {
                 x += 0.5;
-                printPosition();
+                // printPosition();
             }
         }
 
+        // printPosition();
         checkTeleport();
         checkfoodEat();
         glutPostRedisplay(); // Request redisplay
         usleep(5000);
     }
     return NULL;
+}
+
+void ghostMovementTry(int ghostNum)
+{
+    int random = rand() % 4;
+    char tempMove[10];
+    if (random == 1)
+    {
+        float tempX = ghostX[ghostNum];
+        float tempY = ghostY[ghostNum];
+
+        tempY += 1;
+        if (isWallCollide(1, tempX, tempY) == false)
+        {
+            ghostY[ghostNum] += 1;
+        }
+        else
+        {
+            tempY -= 2;
+            if (isWallCollide(1, tempX, tempY) == false)
+            {
+                ghostY[ghostNum] -= 1;
+            }
+            else
+            {
+                tempX += 1;
+                if (isWallCollide(1, tempX, tempY) == false)
+                {
+                    ghostX[ghostNum] += 1;
+                }
+                else
+                {
+                    tempX -= 1;
+                    if (isWallCollide(1, tempX, tempY) == false)
+                    {
+                        ghostX[ghostNum] -= 2;
+                    }
+                }
+            }
+        }
+    }
+}
+void changeGhostMovement(int ghostNum)
+{
+    int randomMove = rand() % 4; // 0 is UP, 1 is DOWN, 2 is LEFT, 3 is RIGHT
+    printf("%d\n", randomMove);
+    if (randomMove == 0)
+    {
+        strcpy(ghostMovement[ghostNum], "up");
+    }
+    else if (randomMove == 1)
+    {
+        strcpy(ghostMovement[ghostNum], "down");
+    }
+    else if (randomMove == 2)
+    {
+        strcpy(ghostMovement[ghostNum], "left");
+    }
+    else if (randomMove == 3)
+    {
+        strcpy(ghostMovement[ghostNum], "right");
+    }
+}
+void *ghostThread(void *arg)
+{
+    srand(time(0));
+    for (int i = 0; i < numGhost; i++)
+        changeGhostMovement(i);
+    while (1)
+    {
+        for (int i = 0; i < numGhost; i++)
+        {
+            float newX = ghostX[i];
+            float newY = ghostY[i];
+
+            if (strcmp(ghostMovement[i], "down") == 0)
+            {
+                newY += 1;
+                if (isWallCollide(1, newX, newY) == false)
+                {
+                    ghostY[i] += 1;
+                }
+                else
+                {
+                    changeGhostMovement(i);
+                }
+            }
+            else if (strcmp(ghostMovement[i], "up") == 0)
+            {
+                newY -= 1;
+                if (isWallCollide(1, newX, newY) == false)
+                {
+                    ghostY[i] -= 1;
+                }
+                else
+                    changeGhostMovement(i);
+            }
+            else if (strcmp(ghostMovement[i], "left") == 0)
+            {
+                newX -= 1;
+                if (isWallCollide(0, newX, newY) == false)
+                {
+                    ghostX[i] -= 1;
+                }
+                else
+                {
+                    changeGhostMovement(i);
+                }
+            }
+            else if (strcmp(ghostMovement[i], "right") == 0)
+            {
+                newX += 1;
+                if (isWallCollide(0, newX, newY) == false)
+                {
+                    ghostX[i] += 1;
+                }
+                else
+                    changeGhostMovement(i);
+            }
+            // printPosition();
+            // ghostMovementTry(i);
+            glutPostRedisplay(); // Request redisplay
+            usleep(5000);
+        }
+    }
+    pthread_exit(NULL);
 }
 
 // User Interface Thread
