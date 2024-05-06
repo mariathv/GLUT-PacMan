@@ -1,5 +1,9 @@
+#include <GL/gl.h>
+#include <GL/glx.h>
+
 #include <GL/glut.h>
 #include <SOIL/SOIL.h>
+
 #include <stdio.h>
 #include <pthread.h>
 #include <string.h>
@@ -21,12 +25,14 @@ const char *backgroundTexturePath = "imgs/map/map.png";  // Path to the backgrou
 void *gameEngineThread(void *arg);
 void *userInterfaceThread(void *arg);
 
+char triedKeyPressed[10];
+int delayTimer = 0;
 char keypressed[10];
 char delayKey[10];
 char prevkeypressed[10];
 
-int delayTurn = 50;
-int delayTimer = 0;
+pthread_mutex_t lock;
+
 bool delayFlag = false;
 
 // Function to load texture from file
@@ -164,6 +170,7 @@ void keyboard(int key)
 {
     float newX = x;
     float newY = y;
+    printf("key %d \n", key);
     switch (key)
     {
     case GLUT_KEY_RIGHT:
@@ -173,6 +180,12 @@ void keyboard(int key)
             pacmanTexturePath = "imgs/pacman/right.png";
             strcpy(keypressed, "right");
         }
+        else
+        {
+            strcpy(triedKeyPressed, "right");
+            delayFlag = true;
+            delayTimer = 50;
+        }
         break;
     case GLUT_KEY_LEFT:
         newX -= 0.5;
@@ -181,7 +194,12 @@ void keyboard(int key)
             pacmanTexturePath = "imgs/pacman/left.png";
             strcpy(keypressed, "left");
         }
-
+        else
+        {
+            strcpy(triedKeyPressed, "left");
+            delayFlag = true;
+            delayTimer = 50;
+        }
         break;
     case GLUT_KEY_UP:
         newY -= 0.5;
@@ -190,6 +208,12 @@ void keyboard(int key)
             pacmanTexturePath = "imgs/pacman/down.png";
             strcpy(keypressed, "up");
             y -= 0.5;
+        }
+        else
+        {
+            strcpy(triedKeyPressed, "up");
+            delayFlag = true;
+            delayTimer = 50;
         }
         break;
     case GLUT_KEY_DOWN:
@@ -200,34 +224,82 @@ void keyboard(int key)
             strcpy(keypressed, "down");
             y += 0.5;
         }
+        else
+        {
+            strcpy(triedKeyPressed, "down");
+            delayFlag = true;
+            delayTimer = 50;
+        }
         break;
     }
+
+    printf("calling Load Texture\n");
     // Reload the texture with the new filename
     loadTexture(pacmanTexturePath, &pacmanTextureID);
     glutPostRedisplay();
 }
 
+void movePacman(const char *direction)
+{
+    float newX = x;
+    float newY = y;
+
+    if (strcmp(direction, "right") == 0)
+    {
+        newX += 0.5;
+        if (isWallCollide(0, newX, newY) == false)
+        {
+            strcpy(keypressed, "right");
+        }
+    }
+    else if (strcmp(direction, "left") == 0)
+    {
+        newX -= 0.5;
+        if (isWallCollide(0, newX, newY) == false)
+        {
+            strcpy(keypressed, "left");
+        }
+    }
+    else if (strcmp(direction, "up") == 0)
+    {
+        newY -= 0.5;
+        if (isWallCollide(1, newX, newY) == false)
+        {
+            strcpy(keypressed, "up");
+            y -= 0.5;
+        }
+    }
+    else if (strcmp(direction, "down") == 0)
+    {
+        newY += 0.5;
+        if (isWallCollide(1, newX, newY) == false)
+        {
+            strcpy(keypressed, "down");
+            y += 0.5;
+        }
+    }
+
+    // Reload the texture with the new filename
+}
+
 // Function to initialize OpenGL settings
 void initOpenGL()
 {
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // Clear color with alpha set to 0
+    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     gluOrtho2D(0, 600, 800, 0);
     glMatrixMode(GL_MODELVIEW);
-
-    // Enable blending for transparent textures
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    // Load the image textures
     loadTexture(pacmanTexturePath, &pacmanTextureID);
     loadTexture(backgroundTexturePath, &backgroundTextureID);
 }
 
 int main(int argc, char **argv)
 {
-    pthread_t EngineThread, playerThread;
+
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
     glutInitWindowSize(700, 900);
@@ -235,32 +307,41 @@ int main(int argc, char **argv)
     glutCreateWindow("Pacman Game");
     initOpenGL();
 
+    pthread_mutex_init(&lock, NULL);
+
+    pthread_t EngineThread, playerThread;
     pthread_create(&EngineThread, NULL, gameEngineThread, NULL);
     pthread_create(&playerThread, NULL, userInterfaceThread, NULL);
 
     glutMainLoop();
 
+    pthread_join(EngineThread, NULL);
+
     return 0;
 }
-bool delayFlag = false;
+
 void *gameEngineThread(void *arg)
 {
-
     glutDisplayFunc(display);
     glutSpecialFunc(keyboard);
-    // Initialize game engine
+    glEnable(GL_TEXTURE_2D);
+
     while (1)
     {
-        if (delayFlag)
-        {
-            delayTimer++;
-            if (delayTimer > delayTurn)
-                delayTimer = 0;
-            delayFlag = false;
-        }
-
         float newX = x;
         float newY = y;
+        if (delayFlag)
+        {
+            movePacman(triedKeyPressed);
+
+            delayTimer -= 1;
+            if (delayTimer < 0)
+            {
+                delayTimer = 0;
+                strcpy(triedKeyPressed, "");
+                delayFlag = false;
+            }
+        }
 
         if (strcmp(keypressed, "down") == 0)
         {
