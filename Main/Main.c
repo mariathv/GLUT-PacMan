@@ -97,13 +97,27 @@ void printPosition()
     printf("position: (%.2f, %.2f)\n", x, y);
 }
 
+void checkTeleport()
+{
+    if (x == 0 && y == 395)
+    {
+        x = 560;
+        // face turn also
+    }
+    else if (x == 560 && y == 395)
+    {
+        x = 0;
+        // face turn alsooo
+    }
+}
+
 bool isWallCollide(bool moveAxis, float xx, float yy) // 0 for x axis movement
 {
     bool errFlag = true;
     if (moveAxis == 0) // Horizontal
     {
-        int xPath[] = {60, 128, 685, 531, 596, 685, 531, 128, 395, 262, 195, 128, 128};
-        int toFrom[] = {20, 555, 20, 125, 20, 254, 20, 125, 20, 555, 319, 555, 447, 555, 447, 555, 10, 165, 300, 555, 125, 447, 200, 283, 317, 350};
+        int xPath[] = {60, 128, 685, 531, 596, 685, 531, 128, 395, 262, 195, 128, 128, 195, 262, 195, 466, 330, 395, 531, 531};
+        int toFrom[] = {20, 555, 20, 125, 20, 254, 20, 125, 20, 555, 319, 555, 447, 555, 447, 555, 0, 189, 315, 555, 125, 447, 190, 253, 317, 380, 20, 61, 20, 252, 509, 555, 189, 384, 189, 384, 384, 560, 320, 384, 189, 256};
         int numElements = sizeof(xPath) / sizeof(xPath[0]);
         int numElementsToFrom = sizeof(toFrom) / sizeof(toFrom[0]);
         for (int i = 0; i < numElements; i++)
@@ -134,8 +148,8 @@ bool isWallCollide(bool moveAxis, float xx, float yy) // 0 for x axis movement
     }
     else // Vertical
     {
-        int YPath[] = {20, 61, 125, 20, 254, 555, 319, 447, 555, 509, 253, 317};
-        int toFrom[] = {60, 128, 128, 195, 128, 685, 531, 685, 596, 685, 531, 685, 596, 685, 128, 685, 60, 128, 128, 195, 60, 128, 60, 128};
+        int YPath[] = {20, 61, 125, 20, 254, 555, 319, 447, 555, 509, 253, 317, 20, 315, 555, 252, 190, 380, 189, 384, 256, 320, 189, 384};
+        int toFrom[] = {60, 128, 128, 195, 128, 685, 531, 685, 596, 685, 531, 685, 596, 685, 128, 685, 60, 128, 128, 195, 60, 128, 60, 128, 195, 262, 195, 262, 195, 262, 195, 262, 128, 195, 128, 195, 262, 466, 262, 466, 466, 531, 466, 531, 531, 596, 531, 596};
         int numElements = sizeof(YPath) / sizeof(YPath[0]);
         int numElementsToFrom = sizeof(toFrom) / sizeof(toFrom[0]);
         for (int i = 0; i < numElements; i++)
@@ -184,7 +198,7 @@ void keyboard(int key)
         {
             strcpy(triedKeyPressed, "right");
             delayFlag = true;
-            delayTimer = 50;
+            delayTimer = 100;
         }
         break;
     case GLUT_KEY_LEFT:
@@ -198,7 +212,7 @@ void keyboard(int key)
         {
             strcpy(triedKeyPressed, "left");
             delayFlag = true;
-            delayTimer = 50;
+            delayTimer = 100;
         }
         break;
     case GLUT_KEY_UP:
@@ -213,7 +227,7 @@ void keyboard(int key)
         {
             strcpy(triedKeyPressed, "up");
             delayFlag = true;
-            delayTimer = 50;
+            delayTimer = 100;
         }
         break;
     case GLUT_KEY_DOWN:
@@ -228,12 +242,12 @@ void keyboard(int key)
         {
             strcpy(triedKeyPressed, "down");
             delayFlag = true;
-            delayTimer = 50;
+            delayTimer = 100;
         }
         break;
     }
-
-    printf("calling Load Texture\n");
+    printPosition();
+    /// printf("calling Load Texture\n");
     // Reload the texture with the new filename
     loadTexture(pacmanTexturePath, &pacmanTextureID);
     glutPostRedisplay();
@@ -266,7 +280,7 @@ void movePacman(const char *direction)
         if (isWallCollide(1, newX, newY) == false)
         {
             strcpy(keypressed, "up");
-            y -= 0.5;
+            // y -= 0.5;
         }
     }
     else if (strcmp(direction, "down") == 0)
@@ -275,7 +289,7 @@ void movePacman(const char *direction)
         if (isWallCollide(1, newX, newY) == false)
         {
             strcpy(keypressed, "down");
-            y += 0.5;
+            // y += 0.5;
         }
     }
 
@@ -375,6 +389,7 @@ void *gameEngineThread(void *arg)
                 x += 0.5;
             }
         }
+        checkTeleport();
         // printPosition();
         glutPostRedisplay(); // Request redisplay
         usleep(5000);
