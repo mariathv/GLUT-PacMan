@@ -160,7 +160,7 @@ bool isWallCollide(bool moveAxis, float xx, float yy) // 0 for x axis movement
 }
 
 // Function to handle keyboard input
-void keyboard(int key, float xx, float yy)
+void keyboard(int key)
 {
     float newX = x;
     float newY = y;
@@ -175,9 +175,12 @@ void keyboard(int key, float xx, float yy)
         }
         break;
     case GLUT_KEY_LEFT:
-        strcpy(prevkeypressed, keypressed);
-        pacmanTexturePath = "imgs/pacman/left.png";
-        strcpy(keypressed, "left");
+        newX -= 0.5;
+        if (isWallCollide(0, newX, newY) == false)
+        {
+            pacmanTexturePath = "imgs/pacman/left.png";
+            strcpy(keypressed, "left");
+        }
 
         break;
     case GLUT_KEY_UP:
@@ -240,10 +243,8 @@ int main(int argc, char **argv)
     return 0;
 }
 bool delayFlag = false;
-
 void *gameEngineThread(void *arg)
 {
-    glutSpecialFunc(keyboard);
 
     glutDisplayFunc(display);
     glutSpecialFunc(keyboard);
