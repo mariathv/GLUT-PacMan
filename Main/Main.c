@@ -20,8 +20,7 @@ GLuint backgroundTextureID;
 
 float x = 60.0f;
 float y = 60.0f;
-float side = 30.0f;                                      // Adjusted the size for clarity
-
+float side = 30.0f; // Adjusted the size for clarity
 
 void *gameEngineThread(void *arg);
 void *userInterfaceThread(void *arg);
@@ -44,8 +43,7 @@ void loadTexture(const char *filename, GLuint *textureID)
         filename,
         SOIL_LOAD_AUTO,
         SOIL_CREATE_NEW_ID,
-        SOIL_FLAG_MIPMAPS | SOIL_FLAG_INVERT_Y | SOIL_FLAG_NTSC_SAFE_RGB | SOIL_FLAG_COMPRESS_TO_DXT
-    );
+        SOIL_FLAG_MIPMAPS | SOIL_FLAG_INVERT_Y | SOIL_FLAG_NTSC_SAFE_RGB | SOIL_FLAG_COMPRESS_TO_DXT);
 
     if (*textureID == 0)
     {
@@ -61,7 +59,7 @@ void display()
 
     // Draw the background map
     glEnable(GL_TEXTURE_2D);
-    
+
     glBindTexture(GL_TEXTURE_2D, backgroundTextureID);
     glBegin(GL_QUADS);
     glTexCoord2f(0, 0);
@@ -75,14 +73,13 @@ void display()
     glEnd();
     glDisable(GL_TEXTURE_2D);
 
-
     // Draw Pacman
     glEnable(GL_TEXTURE_2D);
-    if(strcmp(keypressed , "left") == 0)
+    if (strcmp(keypressed, "left") == 0)
         glBindTexture(GL_TEXTURE_2D, pacmanLeft);
-    else if(strcmp(keypressed , "up") == 0)
+    else if (strcmp(keypressed, "up") == 0)
         glBindTexture(GL_TEXTURE_2D, pacmanDown);
-    else if(strcmp(keypressed , "down") == 0)
+    else if (strcmp(keypressed, "down") == 0)
         glBindTexture(GL_TEXTURE_2D, pacmanUp);
     else
         glBindTexture(GL_TEXTURE_2D, pacmanRight);
@@ -184,7 +181,7 @@ bool isWallCollide(bool moveAxis, float xx, float yy) // 0 for x axis movement
     }
 }
 
-void keyboard(int key)//Primary key board function to handle user inputs
+void keyboard(int key) // Primary key board function to handle user inputs
 {
     float newX = x;
     float newY = y;
@@ -244,11 +241,9 @@ void keyboard(int key)//Primary key board function to handle user inputs
         }
         break;
     }
-    
-
 }
 
-void movePacman(const char *direction)  //A secondary Pacman move check function to check delay movement
+void movePacman(const char *direction) // A secondary Pacman move check function to check delay movement
 {
     float newX = x;
     float newY = y;
@@ -316,7 +311,7 @@ int main(int argc, char **argv)
     initOpenGL();
 
     glutDisplayFunc(display);
-   
+
     pthread_mutex_init(&lock, NULL);
 
     pthread_t EngineThread, playerThread;
