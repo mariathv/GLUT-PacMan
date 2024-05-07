@@ -32,6 +32,7 @@ float ghostX[2] = {
 float ghostY[2] = {466, 466};
 int numGhost = 2;
 char ghostMovement[2][10];
+bool isWallTurn[2];
 
 float foody = 60.0f;
 float foodx = 20.0f; // Adjusted the size for clarity
@@ -514,6 +515,22 @@ void ghostMovementTry(int ghostNum)
         }
     }
 }
+
+void ghostTurnMidWall(bool axis, int currentAxisVal, int movement, int GhostNum)
+{
+    if (axis == 0) // HORIZONTAL
+    {
+        int xPath[] = {60, 128, 685, 531, 596, 685, 531, 128, 395, 262, 195, 128, 128, 195, 262, 195, 466, 330, 395, 531, 531};
+        int toFrom[] = {20, 555, 20, 125, 20, 254, 20, 125, 20, 555, 319, 555, 447, 555, 447, 555, 0, 189, 315, 555, 125, 447, 190, 253, 317, 380, 20, 61, 20, 252, 509, 555, 189, 384, 189, 384, 384, 560, 320, 384, 189, 256};
+        int numElements = sizeof(xPath) / sizeof(xPath[0]);
+        int numElementsToFrom = sizeof(toFrom) / sizeof(toFrom[0]);
+
+        //
+    }
+    else
+    {
+    }
+}
 void changeGhostMovement(int ghostNum)
 {
     int randomMove = rand() % 4; // 0 is UP, 1 is DOWN, 2 is LEFT, 3 is RIGHT
@@ -556,6 +573,14 @@ void *ghostThread(void *arg)
                 }
                 else
                 {
+                    if (isWallTurn[i] == false)
+                    {
+                        int turnChance = 1;
+                        if (turnChance == 1)
+                        {
+                            isWallTurn[i] = true;
+                        }
+                    }
                     changeGhostMovement(i);
                 }
             }
@@ -567,7 +592,17 @@ void *ghostThread(void *arg)
                     ghostY[i] -= 1;
                 }
                 else
+                {
+                    if (isWallTurn[i] == false)
+                    {
+                        int turnChance = 1;
+                        if (turnChance == 1)
+                        {
+                            isWallTurn[i] = true;
+                        }
+                    }
                     changeGhostMovement(i);
+                }
             }
             else if (strcmp(ghostMovement[i], "left") == 0)
             {
@@ -578,6 +613,15 @@ void *ghostThread(void *arg)
                 }
                 else
                 {
+                    int turnChance = 1;
+                    if (isWallTurn[i] == false)
+                    {
+                        int turnChance = 1;
+                        if (turnChance == 1)
+                        {
+                            isWallTurn[i] = true;
+                        }
+                    }
                     changeGhostMovement(i);
                 }
             }
@@ -589,10 +633,22 @@ void *ghostThread(void *arg)
                     ghostX[i] += 1;
                 }
                 else
+                {
+                    int turnChance = 1;
+                    if (isWallTurn[i] == false)
+                    {
+                        int turnChance = 1;
+                        if (turnChance == 1)
+                        {
+                            isWallTurn[i] = true;
+                        }
+                    }
                     changeGhostMovement(i);
+                }
             }
+
             // printPosition();
-            // ghostMovementTry(i);
+            ghostMovementTry(i);
             glutPostRedisplay(); // Request redisplay
             usleep(5000);
         }
@@ -610,3 +666,7 @@ void *userInterfaceThread(void *arg)
     }
     return NULL;
 }
+
+// login of turning in mid walls :
+//  50% change of turning in mid walls instead of going all the way to the corner (rand())
+//  if flagTurn is on (50% chance) ghost will turn in the mid wall
