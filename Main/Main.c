@@ -413,6 +413,88 @@ int main(int argc, char **argv)
     return 0;
 }
 
+void checkGhostCoords(int ghostNum)
+{
+    srand(time(0));
+    int chance = rand() % 3;
+    if (chance == 1)
+    {
+        int totalVertices = sizeof(xCoords) / sizeof(xCoords[0]);
+        for (int i = 0; i < totalVertices; i++)
+        {
+            if (ghostX[ghostNum] == xCoords[i] && ghostY[ghostNum] == yCoords[i])
+            {
+                // int rand=
+                float newX = ghostX[ghostNum];
+                float newY = ghostY[ghostNum];
+                if (strcpy(ghostMovement[ghostNum], "left") || strcpy(ghostMovement[ghostNum], "right"))
+                {
+                    newX = ghostX[ghostNum];
+                    newY = ghostY[ghostNum] + 1;
+                    if (isWallCollide(1, newX, newY) == false)
+                    {
+                        ghostY[ghostNum] += 1;
+                        strcpy(ghostMovement[ghostNum], "down");
+                        return;
+                    }
+                    newX = ghostX[ghostNum];
+                    newY = ghostY[ghostNum] - 1;
+                    if (isWallCollide(1, newX, newY) == false)
+                    {
+                        ghostY[ghostNum] -= 1;
+                        strcpy(ghostMovement[ghostNum], "up");
+                        return;
+                    }
+                }
+            }
+            else if (ghostX[ghostNum] == xCoords[i] && ghostY[ghostNum] == yCoords[i])
+            {
+                // int rand=
+                float newX = ghostX[ghostNum];
+                float newY = ghostY[ghostNum];
+                if (strcpy(ghostMovement[ghostNum], "left") || strcpy(ghostMovement[ghostNum], "right"))
+                {
+                    newX = ghostX[ghostNum];
+                    newY = ghostY[ghostNum] + 1;
+                    if (isWallCollide(1, newX, newY) == false)
+                    {
+                        ghostY[ghostNum] += 1;
+                        strcpy(ghostMovement[ghostNum], "down");
+                        return;
+                    }
+                    newX = ghostX[ghostNum];
+                    newY = ghostY[ghostNum] - 1;
+                    if (isWallCollide(1, newX, newY) == false)
+                    {
+                        ghostY[ghostNum] -= 1;
+                        strcpy(ghostMovement[ghostNum], "up");
+                        return;
+                    }
+                }
+                else if (strcpy(ghostMovement[ghostNum], "up") || strcpy(ghostMovement[ghostNum], "down"))
+                {
+                    newX = ghostX[ghostNum] + 1;
+                    newY = ghostY[ghostNum];
+                    if (isWallCollide(1, newX, newY) == false)
+                    {
+                        ghostX[ghostNum] += 1;
+                        strcpy(ghostMovement[ghostNum], "right");
+                        return;
+                    }
+                    newX = ghostX[ghostNum] - 1;
+                    newY = ghostY[ghostNum];
+                    if (isWallCollide(1, newX, newY) == false)
+                    {
+                        ghostX[ghostNum] -= 1;
+                        strcpy(ghostMovement[ghostNum], "left");
+                        return;
+                    }
+                }
+            }
+        }
+    }
+}
+
 void *gameEngineThread(void *arg)
 {
     checkFoodEatArr = malloc(foodXYSize * sizeof(bool));
@@ -507,7 +589,7 @@ void *ghostThread(void *arg)
         changeGhostMovement(i);
     while (1)
     {
-        for (int i = 0; i < 1; i++)
+        for (int i = 0; i < numGhost; i++)
         {
             float newX = ghostX[i];
             float newY = ghostY[i];
@@ -518,6 +600,7 @@ void *ghostThread(void *arg)
                 if (isWallCollide(1, newX, newY) == false)
                 {
                     ghostY[i] += 1;
+                    //  checkGhostCoords(i);
                 }
                 else
                 {
@@ -540,6 +623,7 @@ void *ghostThread(void *arg)
                 if (isWallCollide(1, newX, newY) == false)
                 {
                     ghostY[i] -= 1;
+                    //// checkGhostCoords(i);
                 }
                 else
                 {
@@ -562,6 +646,7 @@ void *ghostThread(void *arg)
                 if (isWallCollide(0, newX, newY) == false)
                 {
                     ghostX[i] -= 1;
+                    // checkGhostCoords(i);
                 }
                 else
                 {
@@ -585,6 +670,7 @@ void *ghostThread(void *arg)
                 if (isWallCollide(0, newX, newY) == false)
                 {
                     ghostX[i] += 1;
+                    //  checkGhostCoords(i);
                 }
                 else
                 {
@@ -602,12 +688,6 @@ void *ghostThread(void *arg)
                     changeGhostMovement(i);
                 }
                 // printf("Ghost %d: %d\n", i, isWallTurn[i]);
-            }
-
-            if (isWallTurn[i] == true && ((strcmp(ghostMovement[i], "right") || (strcmp(ghostMovement[i], "left")))))
-            {
-                // printf("yPos %f\n", ghostY[i]);
-                ghostTurnMidWall(0, ghostY[i], i);
             }
 
             // printPosition();
@@ -633,3 +713,4 @@ void *userInterfaceThread(void *arg)
 //  logic :
 // check x y coords of ghost
 // if at a vertice -> rand() value to decide where to turn
+// need to get mid coords
