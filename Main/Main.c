@@ -28,32 +28,41 @@ float x = 280.0f;
 float y = 195.0f;
 float side = 30.0f;
 
-float ghostX[2] = {
-    256,
-    270};
-float ghostY[2] = {466, 466};
+float ghostX[2] = {20,270};
+float ghostY[2] = {60, 466};
 int numGhost = 2;
-char ghostMovement[2][10];
+char ghostMovement[2][10] = {"right" , ""};
 bool isWallTurn[2];
+
+              //   0    1   2    3   4    5    6    7    8    9    10   11   12   13   14   15   16   17   18   19   20   21    22  23   24   25   26   27   28   29   30    31   32   33   34   35  36   37   38   39   40   41   42  43   44   45    46   47   48   49   50   51   52   53   54   55   56   57   58  59    60   61   62   63  64   65   66   67  68  69   70   71   72    73   74   75   76   77   78   79   80   81    82  83   84   85   86   87   88   89   90 
+//int xCoords[] = {20, 555, 20, 125, 20,  254, 20,  125, 20,  555, 319, 555, 447, 555, 447, 555, 0,   189, 315, 555, 125, 447, 190, 253, 317, 380, 20,  61,  20,  252, 509, 555, 189, 384, 189, 384, 384, 560, 320, 384, 189, 256, 20, 20,  61,  61,  125, 125, 20,  20,  254, 254, 555, 555, 319, 319, 447, 447, 555, 555, 509, 509, 253, 253, 317, 317, 20, 20, 315, 315, 555, 555 , 252, 252, 190, 190, 380, 380, 189, 189, 384, 384, 256, 256, 320, 320, 189, 189, 384, 384};
+//int yCoords[] = {60, 60 , 128,128, 685, 685, 531, 531, 596, 596, 685, 685, 531, 531, 128, 128, 395, 395, 262, 262, 195, 195, 128, 128, 128, 128, 195, 195, 262, 262, 195, 195, 466, 466, 330, 330, 395, 395, 531, 531, 531, 531, 60, 128, 128, 195, 128, 685, 531, 685, 596, 685, 531, 685, 596, 685, 128, 685, 60,  128, 128, 195, 60,  128, 60,  128, 195,262,195, 262, 195, 262,  195, 262, 128, 195, 128, 195, 262, 466, 262, 466, 466, 531, 466, 531, 531, 596, 531, 596};
 
 float foody = 60.0f;
 float foodx = 20.0f; // Adjusted the size for clarity
 float foodside = 30.0f;
 
 int arrFoody[] = {60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 531, 531, 531, 531, 531, 531, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 531, 531, 531, 531, 531, 531, 531, 395, 395, 395, 395, 395, 395, 395, 395, 395, 395, 262, 262, 262, 262, 262, 262, 262, 262, 262, 262, 262, 262, 262, 195, 195, 195, 195, 195, 195, 195, 195, 195, 195, 195, 195, 195, 195, 195, 195, 195, 262, 262, 262, 262, 262, 262, 262, 262, 262, 262, 262, 262, 262, 195, 195, 195, 466, 466, 466, 466, 466, 466, 466, 466, 466, 466, 466, 330, 330, 330, 330, 330, 330, 330, 330, 330, 330, 330, 395, 395, 395, 395, 395, 395, 395, 395, 395, 395, 531, 531, 531, 531, 531, 531, 531, 531, 85, 107, 150, 170, 150, 173, 215, 240, 290, 310, 330, 350, 370, 420, 440, 460, 480, 505, 550, 570, 620, 640, 660, 150, 173, 215, 240, 290, 310, 330, 350, 370, 420, 440, 460, 480, 505, 550, 570, 620, 640, 660, 550, 570, 620, 640, 660, 555, 575, 620, 640, 660, 620, 640, 660, 85, 105, 150, 170, 80, 100, 80, 100, 220, 240, 220, 240, 220, 240, 150, 170, 150, 170, 285, 305, 350, 370, 420, 440, 285, 305, 350, 370, 420, 440, 490, 510, 490, 510, 550, 570, 550, 570, 620, 640, 660, 220, 240};
-int arrFoodx[] = {20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 220, 237, 253, 273, 296, 317, 340, 360, 380, 400, 420, 440, 460, 480, 500, 520, 539, 555, 20, 40, 60, 80, 103, 125, 447, 463, 489, 509, 523, 539, 555, 190, 210, 230, 253, 317, 340, 360, 380, 20 , 40 , 60 , 80 , 100, 125, 140, 160, 180, 200, 220, 238, 254, 319, 340, 360, 380, 400, 420, 440, 460, 480, 500, 520, 539, 555, 20,  40 , 60 , 80 , 103 ,125, 20 , 40 , 60 , 80 , 100, 125, 140, 160, 180, 200, 220, 240, 260, 280, 300, 320, 340, 360, 380, 400, 423, 447, 463, 480, 500, 520, 539, 555, 447, 463, 482, 501, 520, 539, 555, 0, 20, 40, 60, 80, 100, 125, 143, 165, 189, 315, 338, 360, 380, 400, 420, 447, 463, 480, 501, 520, 539, 555, 125, 142, 160, 180, 200, 220, 240, 320, 340, 360, 380, 403, 425, 447, 20, 40, 61, 20, 40, 60, 80, 100, 125, 140, 160, 177, 193, 210, 230, 252, 509, 531, 555, 189, 204, 221, 240, 260, 280, 300, 320, 340, 362, 384, 189, 204, 221, 240, 260, 280, 300, 320, 340, 362, 384, 384, 400, 420, 447, 463, 480, 500, 520, 540, 560, 320, 340, 360, 384, 189, 213, 235, 256, 20, 20, 61, 61, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 447, 447, 447, 447, 447, 447, 447, 447, 447, 447, 447, 447, 447, 447, 447, 447, 447, 447, 447, 20, 20, 254, 254, 254, 555, 555, 555, 555, 555, 319, 319, 319, 555, 555, 509, 509, 253, 253, 317, 317, 20, 20, 315, 315, 555, 555, 190, 190, 380, 380, 189, 189, 189, 189, 189, 189, 384, 384, 384, 384, 384, 384, 256, 256, 320, 320, 189, 189, 384, 384, 20, 20, 20, 252, 252};
-
-
+int arrFoodx[] = {20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 220, 237, 253, 273, 296, 317, 340, 360, 380, 400, 420, 440, 460, 480, 500, 520, 539, 555, 20, 40, 60, 80, 103, 125, 447, 463, 489, 509, 523, 539, 555, 190, 210, 230, 253, 317, 340, 360, 380, 20, 40, 60, 80, 100, 125, 140, 160, 180, 200, 220, 238, 254, 319, 340, 360, 380, 400, 420, 440, 460, 480, 500, 520, 539, 555, 20, 40, 60, 80, 103, 125, 20, 40, 60, 80, 100, 125, 140, 160, 180, 200, 220, 240, 260, 280, 300, 320, 340, 360, 380, 400, 423, 447, 463, 480, 500, 520, 539, 555, 447, 463, 482, 501, 520, 539, 555, 0, 20, 40, 60, 80, 100, 125, 143, 165, 189, 315, 338, 360, 380, 400, 420, 447, 463, 480, 501, 520, 539, 555, 125, 142, 160, 180, 200, 220, 240, 320, 340, 360, 380, 403, 425, 447, 20, 40, 61, 20, 40, 60, 80, 100, 125, 140, 160, 177, 193, 210, 230, 252, 509, 531, 555, 189, 204, 221, 240, 260, 280, 300, 320, 340, 362, 384, 189, 204, 221, 240, 260, 280, 300, 320, 340, 362, 384, 384, 400, 420, 447, 463, 480, 500, 520, 540, 560, 320, 340, 360, 384, 189, 213, 235, 256, 20, 20, 61, 61, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 447, 447, 447, 447, 447, 447, 447, 447, 447, 447, 447, 447, 447, 447, 447, 447, 447, 447, 447, 20, 20, 254, 254, 254, 555, 555, 555, 555, 555, 319, 319, 319, 555, 555, 509, 509, 253, 253, 317, 317, 20, 20, 315, 315, 555, 555, 190, 190, 380, 380, 189, 189, 189, 189, 189, 189, 384, 384, 384, 384, 384, 384, 256, 256, 320, 320, 189, 189, 384, 384, 20, 20, 20, 252, 252};
 
 
 int xCoords[] = {20, 555, 20, 125, 20, 254, 20, 125, 20, 555, 319, 555, 447, 555, 447, 555, 0, 189, 315, 555, 125, 447, 190, 253, 317, 380, 20, 61, 20, 252, 509, 555, 189, 384, 189, 384, 384, 560, 320, 384, 189, 256, 20, 20, 61, 61, 125, 125, 20, 20, 254, 254, 555, 555, 319, 319, 447, 447, 555, 555, 509, 509, 253, 253, 317, 317, 20, 20, 315, 315, 555, 555, 252, 252, 190, 190, 380, 380, 189, 189, 384, 384, 256, 256, 320, 320, 189, 189, 384, 384, 447, 125, 447, 125, 447, 254, 125, 447, 125};
 int yCoords[] = {60, 60, 128, 128, 685, 685, 531, 531, 596, 596, 685, 685, 531, 531, 128, 128, 395, 395, 262, 262, 195, 195, 128, 128, 128, 128, 195, 195, 262, 262, 195, 195, 466, 466, 330, 330, 395, 395, 531, 531, 531, 531, 60, 128, 128, 195, 128, 685, 531, 685, 596, 685, 531, 685, 596, 685, 128, 685, 60, 128, 128, 195, 60, 128, 60, 128, 195, 262, 195, 262, 195, 262, 195, 262, 128, 195, 128, 195, 262, 466, 262, 466, 466, 531, 466, 531, 531, 596, 531, 596, 262, 330, 330, 395, 395, 466, 596, 596, 262};
 
-int graphi[] = {0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 7, 8, 8, 8, 9, 9, 9, 10, 10, 11, 11, 12, 12, 12, 13, 13, 14, 14, 15, 15, 17, 17, 17, 18, 18, 19, 19, 20, 20, 20, 21, 21, 21, 99, 99, 99, 99, 23, 23, 24, 24, 25, 25, 26, 26, 27, 27, 28, 28, 30, 30, 31, 31, 32, 32, 33, 33, 34, 34, 34, 35, 35, 35, 36, 36, 36, 38, 38, 39, 39, 40, 40, 41, 41, 44, 44, 44, 47, 47, 47, 63, 63, 63, 65, 65, 65, 61, 61, 61, 76, 76, 76, 73, 73, 73, 69, 69, 69, 78, 78, 78, 79, 79, 79, 81, 81, 81, 91, 91, 91, 91, 92, 92, 93, 93, 94, 94, 94, 95, 95, 95, 96, 96, 96, 85, 85, 85, 97, 97, 97, 97, 88, 88, 88, 50, 50, 50, 54, 54, 54, 90, 90, 90, 98, 98, 98, 98, 57, 57, 57};
-int graphj[] = {2, 63, 15, 65, 0, 44, 44, 20, 8, 47, 47, 50, 8, 7, 97, 6, 94, 6, 97, 4, 13, 11, 98, 54, 57, 9, 57, 95, 13, 98, 12, 9, 61, 21, 1, 61, 94, 34, 32, 69, 81, 31, 91, 3, 76, 99, 14, 78, 91, 20, 28, 79, 92, 22, 63, 65, 25, 24, 78, 28, 27, 26, 44, 26, 99, 61, 31, 30, 19, 17, 96, 36, 85, 79, 17, 35, 81, 34, 36, 35, 95, 33, 85, 39, 38, 90, 88, 41, 40, 96, 2, 3, 27, 4, 97, 5, 0, 23, 65, 63, 24, 1, 14, 30, 15, 20, 21, 73, 76, 29, 69, 73, 18, 78, 69, 25, 21, 99, 34, 29, 18, 35, 91, 81, 21, 19, 93, 99, 94, 91, 95, 92, 17, 7, 93, 36, 12, 32, 41, 85, 96, 38, 33, 8, 7, 88, 47, 97, 40, 50, 88, 54, 5, 50, 10, 90, 54, 39, 98, 90, 12, 9, 57, 10, 98, 11};
 
-int coordsXYSize = sizeof(yCoords) / sizeof(yCoords[0]); 
+int graphi[] = {0 ,0 ,1 ,1 ,2 ,2 ,3 ,3 ,4 ,4 ,5 ,5 ,6 ,6 ,7 ,7 ,7 ,8 ,8 ,8 ,9 ,9 ,9 ,10 ,10 ,11 ,11 ,12 ,12 ,12 ,13 ,13 ,14 ,14 ,15 ,15 ,17 ,17 ,17 ,18 ,18 ,19 ,19 ,20 ,20 ,20 ,21 ,21 ,21 ,98 ,98 ,98 ,98 ,23 ,23 ,24 ,24 ,25 ,25 ,26 ,26 ,27 ,27 ,28 ,28 ,30 ,30 ,31 ,31 ,32 ,32 ,33 ,33 ,34 ,34 ,34 ,35 ,35 ,35 ,36 ,36 ,36 ,38 ,38 ,39 ,39 ,40 ,40 ,41 ,41 ,44 ,44 ,44 ,47 ,47 ,47 ,62 ,62 ,62 ,64 ,64 ,64 ,60 ,60 ,60 ,75 ,75 ,75 ,72 ,72 ,72 ,68 ,68 ,68 ,77 ,77 ,77 ,78 ,78 ,78 ,80 ,80 ,80 ,90 ,90 ,90 ,90 ,91 ,91 ,92 ,92 ,93 ,93 ,93 ,94 ,94 ,94 ,95 ,95 ,95 ,84 ,84 ,84 ,96 ,96 ,96 ,96 ,87 ,87 ,87 ,50 ,50 ,50 ,54 ,54 ,54 ,89 ,89 ,89 ,97 ,97 ,97 ,97 ,57 ,57 ,57};
+int graphj[] = {2 ,62 ,15 ,64 ,0 ,44 ,44 ,20 ,8 ,47 ,47 ,50 ,8 ,7 ,96 ,6 ,93 ,6 ,96 ,4 ,13 ,11 ,97 ,54 ,57 ,9 ,57 ,94 ,13 ,97 ,12 ,9 ,60 ,21 ,1 ,60 ,93 ,34 ,32 ,68 ,80 ,31 ,90 ,3 ,75 ,98 ,14 ,77 ,90 ,20 ,28 ,78 ,91 ,22 ,62 ,64 ,25 ,24 ,77 ,28 ,27 ,26 ,44 ,26 ,98 ,60 ,31 ,30 ,19 ,17 ,95 ,36 ,84 ,78 ,17 ,35 ,80 ,34 ,36 ,35 ,94 ,33 ,84 ,39 ,38 ,89 ,87 ,41 ,40 ,95 ,2 ,3 ,27 ,4 ,96 ,5 ,0 ,23 ,64 ,62 ,24 ,1 ,14 ,30 ,15 ,20 ,21 ,72 ,75 ,29 ,68 ,72 ,18 ,77 ,68 ,25 ,21 ,98 ,34 ,29 ,18 ,35 ,90 ,80 ,21 ,19 ,92 ,98 ,93 ,90 ,94 ,91 ,17 ,7 ,92 ,36 ,12 ,32 ,41 ,84 ,95 ,38 ,33 ,8 ,7 ,87 ,47 ,96 ,40 ,50 ,87 ,54 ,5 ,50 ,10 ,89 ,54 ,39 ,97 ,89 ,12 ,9 ,57 ,10 ,97 ,11};
+
+// coords mid
+int xMidCoords[] = {447, 125, 447, 125, 447, 254, 125, 447, 125};
+int yMidCoords[] = {262, 330, 330, 395, 395, 466, 596, 596, 262};
+
+
+int coordsXYSize = sizeof(yCoords) / sizeof(yCoords[0]);
 const int foodXYSize = sizeof(arrFoodx) / sizeof(arrFoodx[0]);
+
+int ghostClosestVertex ;
+int pacmanClosestVertex;
 
 bool *checkFoodEatArr;
 
@@ -63,7 +72,7 @@ void *ghostThread(void *arg);
 
 char triedKeyPressed[10];
 int delayTimer = 0;
-char keypressed[10];
+char keypressed[10] = "up";
 char delayKey[10];
 char prevkeypressed[10];
 
@@ -73,6 +82,8 @@ bool delayFlag = false;
 
 
 int size;
+
+bool isWallCollide(bool moveAxis, float xx, float yy);
 struct AdjListNode
 {
     int dest;
@@ -90,8 +101,6 @@ struct Graph
     int V;
     struct AdjList *array;
 };
-
-
 
 
 struct AdjListNode *newAdjListNode(int dest, int weight)
@@ -205,19 +214,131 @@ void dijkstra(struct Graph *graph, int start, int end)
 
 void createGrapha()
 {
-    size = 99;
+    size = 98;
     int arrSize = sizeof(graphi) / sizeof(graphi[0]);
 
     graph = createGraph(size);
 
     for (int i = 0; i < arrSize; ++i)
     {
-        int x = xCoords[graphj[i]] - yCoords[graphi[i]];
-        int y = xCoords[graphj[i]] - yCoords[graphi[i]];
+        int x = xCoords[graphj[i]] - xCoords[graphi[i]];
+        int y = yCoords[graphj[i]] - yCoords[graphi[i]];
         int ans = sqrt((x * x) + (y * y));
-
         addEdge(graph, graphi[i], graphj[i], ans);
+        // graph2D[graphi[i]][graphj[i]] = ans;
     }
+}
+
+int checkCorner(int x , int y)
+{
+    int size = sizeof(xCoords) / sizeof(xCoords[0]);
+    for(int i = 0 ; i < size ; ++i)
+    {
+        if(x == xCoords[i] && y == yCoords[i])
+        {
+            printf("vertex %d         %d\n",x , y);
+            printf("index =  %d \n",i );
+
+            return i;
+        }
+    }
+    return -1;
+}
+
+
+void print()
+{
+    int size = sizeof(xCoords) / sizeof(xCoords[0]);
+    for(int i = 0 ; i < size ; ++i)
+    {
+        printf("index : %d    --- vertex %d         %d\n",i,xCoords[i] , yCoords[i]);
+            // printf("index =  %d \n",i );
+    }
+}
+
+
+int checkClosest(char *mov , float xposi , float yposi)
+{
+    char movement[10];
+    strcpy(movement , mov);
+
+    int xx = xposi;
+    int yy = yposi;
+    int index = -1;
+    printf("movement : %s \n" , mov);
+    printf("x = %d     y = %d \n",xx , yy);
+    while(1)
+    {
+        if(strcmp(movement , "up") == 0)
+        {
+            if(isWallCollide(1,xx,yy) == false)
+            {
+                index = checkCorner(xx,yy);
+                if(index != -1)
+                {
+                    printf("up");
+                    break;
+                }
+                yy -=1;
+            }
+            else
+            {
+                strcpy(movement , "down");
+            }
+        }
+        if(strcmp(movement , "down")== 0)
+        {
+            if(isWallCollide(1,xx,yy) == false)
+            {
+                index = checkCorner(xx,yy);
+                if(index != -1)
+                {
+                    printf("Down");
+                    break;
+                }
+                yy +=1;
+            }
+            else
+            {
+                strcpy(movement , "left");
+            }
+        }
+        if(strcmp(movement , "left") == 0)
+        {
+            if(isWallCollide(0,xx,yy) == false)
+            {
+                index = checkCorner(xx,yy);
+                if(index != -1)
+                {
+                    printf("Left");
+                    break;
+                }
+                xx -=1;
+            }
+            else
+            {
+                strcpy(movement , "right");
+            }
+        }
+        if(strcmp(movement , "right") == 0)
+        {
+            if(isWallCollide(0,xx,yy) == false)
+            {
+                index = checkCorner(xx,yy);
+                if(index != -1)
+                {
+                    printf("Right");
+                    break;
+                }
+                xx +=1;
+            }
+            else
+            {
+                strcpy(movement , "up");
+            }
+        }
+    }
+    return index;
 }
 
 // Function to load texture from file
@@ -333,7 +454,6 @@ void display()
     glutSwapBuffers();
 }
 
-
 void printPosition()
 {
     printf("position: (%.2f, %.2f)\n", x, y);
@@ -350,8 +470,6 @@ void checkcornerpoint()
         }
     }
 }
-
-
 
 void checkfoodEat()
 {
@@ -504,7 +622,6 @@ void keyboard(int key) // Primary key board function to handle user inputs
     }
 }
 
-
 void movePacman(const char *direction) // A secondary Pacman move check function to check delay movement
 {
     float newX = x;
@@ -579,13 +696,17 @@ int main(int argc, char **argv)
 
     pthread_mutex_init(&lock, NULL);
 
+    createGrapha();
+    printGraph(graph);
+    print();
+
     int ghostNumber1 = 0;
     int ghostNumber2 = 1;
     pthread_t EngineThread, playerThread, Ghost1, Ghost2, Ghost3, Ghost4;
     pthread_create(&EngineThread, NULL, gameEngineThread, NULL);
     pthread_create(&playerThread, NULL, userInterfaceThread, NULL);
     pthread_create(&Ghost1, NULL, ghostThread, (void*)&ghostNumber1);
-    pthread_create(&Ghost2, NULL, ghostThread, (void*)&ghostNumber2);
+    // pthread_create(&Ghost2, NULL, ghostThread, (void*)&ghostNumber2);
 
     glutMainLoop();
 
@@ -599,19 +720,22 @@ void checkGhostCoords(int ghostNum)
     if (chance == 1)
     {
         int totalVertices = sizeof(xCoords) / sizeof(xCoords[0]);
-        for (int i = 0; i < totalVertices; i++)
+        for (int i = 0; i < 8; i++)
         {
-            if (ghostX[ghostNum] == xCoords[i] && ghostY[ghostNum] == yCoords[i])
+            if (ghostX[ghostNum] == xMidCoords[i] && ghostY[ghostNum] == yMidCoords[i])
             {
                 // int rand=
-                float newX = ghostX[ghostNum];
-                float newY = ghostY[ghostNum];
+
                 if (strcpy(ghostMovement[ghostNum], "left") || strcpy(ghostMovement[ghostNum], "right"))
                 {
+
+                    float newX = ghostX[ghostNum];
+                    float newY = ghostY[ghostNum];
                     newX = ghostX[ghostNum];
                     newY = ghostY[ghostNum] + 1;
                     if (isWallCollide(1, newX, newY) == false)
                     {
+                        printf("to down\n");
                         ghostY[ghostNum] += 1;
                         strcpy(ghostMovement[ghostNum], "down");
                         return;
@@ -620,31 +744,7 @@ void checkGhostCoords(int ghostNum)
                     newY = ghostY[ghostNum] - 1;
                     if (isWallCollide(1, newX, newY) == false)
                     {
-                        ghostY[ghostNum] -= 1;
-                        strcpy(ghostMovement[ghostNum], "up");
-                        return;
-                    }
-                }
-            }
-            else if (ghostX[ghostNum] == xCoords[i] && ghostY[ghostNum] == yCoords[i])
-            {
-                // int rand=
-                float newX = ghostX[ghostNum];
-                float newY = ghostY[ghostNum];
-                if (strcpy(ghostMovement[ghostNum], "left") || strcpy(ghostMovement[ghostNum], "right"))
-                {
-                    newX = ghostX[ghostNum];
-                    newY = ghostY[ghostNum] + 1;
-                    if (isWallCollide(1, newX, newY) == false)
-                    {
-                        ghostY[ghostNum] += 1;
-                        strcpy(ghostMovement[ghostNum], "down");
-                        return;
-                    }
-                    newX = ghostX[ghostNum];
-                    newY = ghostY[ghostNum] - 1;
-                    if (isWallCollide(1, newX, newY) == false)
-                    {
+                        printf("to up\n");
                         ghostY[ghostNum] -= 1;
                         strcpy(ghostMovement[ghostNum], "up");
                         return;
@@ -652,10 +752,13 @@ void checkGhostCoords(int ghostNum)
                 }
                 else if (strcpy(ghostMovement[ghostNum], "up") || strcpy(ghostMovement[ghostNum], "down"))
                 {
+                    float newX = ghostX[ghostNum];
+                    float newY = ghostY[ghostNum];
                     newX = ghostX[ghostNum] + 1;
                     newY = ghostY[ghostNum];
                     if (isWallCollide(1, newX, newY) == false)
                     {
+                        printf("to right\n");
                         ghostX[ghostNum] += 1;
                         strcpy(ghostMovement[ghostNum], "right");
                         return;
@@ -664,6 +767,7 @@ void checkGhostCoords(int ghostNum)
                     newY = ghostY[ghostNum];
                     if (isWallCollide(1, newX, newY) == false)
                     {
+                        printf("to left\n");
                         ghostX[ghostNum] -= 1;
                         strcpy(ghostMovement[ghostNum], "left");
                         return;
@@ -700,9 +804,7 @@ void *gameEngineThread(void *arg)
             if (isWallCollide(1, newX, newY) == false)
             {
                 y += 0.5;
-                printPosition();
-                checkcornerpoint();
-                printf("\n");
+                // printPosition();
             }
         }
         else if (strcmp(keypressed, "up") == 0)
@@ -711,9 +813,7 @@ void *gameEngineThread(void *arg)
             if (isWallCollide(1, newX, newY) == false)
             {
                 y -= 0.5;
-                printPosition();
-                checkcornerpoint();
-                printf("\n");
+                // printPosition();
             }
         }
         else if (strcmp(keypressed, "left") == 0)
@@ -722,9 +822,7 @@ void *gameEngineThread(void *arg)
             if (isWallCollide(0, newX, newY) == false)
             {
                 x -= 0.5;
-                printPosition();
-                checkcornerpoint();
-                printf("\n");
+                // printPosition();
             }
         }
         else if (strcmp(keypressed, "right") == 0)
@@ -733,9 +831,7 @@ void *gameEngineThread(void *arg)
             if (isWallCollide(0, newX, newY) == false)
             {
                 x += 0.5;
-                printPosition();
-                checkcornerpoint();
-                printf("\n");
+                // printPosition();
             }
         }
 
@@ -781,12 +877,14 @@ void changeGhostMovement(int ghostNum)
     }
 }
 
+
+
 void *ghostThread(void *arg)
 {
     int i = *(int *)arg;
     printf("i : %d\n", i);
     srand(time(0));
-    changeGhostMovement(i);
+    // changeGhostMovement(i);
     while (1)
     {
         float newX = ghostX[i];
@@ -796,22 +894,22 @@ void *ghostThread(void *arg)
             newY += 1;
             if (isWallCollide(1, newX, newY) == false)
             {
-                ghostY[i] += 0.5;
-                //  checkGhostCoords(i);
+                ghostY[i] += 1;
+                checkGhostCoords(i);
             }
             else
             {
-                if (isWallTurn[i] == false)
-                {
-                    int turnChance = 1;
-                    if (turnChance == 1)
-                    {
-                        isWallTurn[i] = true;
-                    }
-                }
-                else
-                    isWallTurn[i] = false;
-                changeGhostMovement(i);
+                // if (isWallTurn[i] == false)
+                // {
+                //     //int turnChance = rand()%2;
+                //     if (turnChance == 1)
+                //     {
+                //         isWallTurn[i] = true;
+                //     }
+                // }
+                // else
+                //     isWallTurn[i] = false;
+                // changeGhostMovement(i);
             }
         }
         else if (strcmp(ghostMovement[i], "up") == 0)
@@ -819,22 +917,22 @@ void *ghostThread(void *arg)
             newY -= 1;
             if (isWallCollide(1, newX, newY) == false)
             {
-                ghostY[i] -= 0.5;
-                //checkGhostCoords(i);
+                ghostY[i] -= 1;
+                checkGhostCoords(i);
             }
             else
             {
-                if (isWallTurn[i] == false)
-                {
-                    int turnChance = 1;
-                    if (turnChance == 1)
-                    {
-                        isWallTurn[i] = true;
-                    }
-                }
-                else
-                    isWallTurn[i] = false;
-                changeGhostMovement(i);
+                // if (isWallTurn[i] == false)
+                // {
+                //     int turnChance = 1;
+                //     if (turnChance == 1)
+                //     {
+                //         isWallTurn[i] = true;
+                //     }
+                // }
+                // else
+                //     isWallTurn[i] = false;
+                // changeGhostMovement(i);
             }
         }
         else if (strcmp(ghostMovement[i], "left") == 0)
@@ -842,23 +940,23 @@ void *ghostThread(void *arg)
             newX -= 1;
             if (isWallCollide(0, newX, newY) == false)
             {
-                ghostX[i] -= 0.5;
-                // checkGhostCoords(i);
+                ghostX[i] -= 1;
+                checkGhostCoords(i);
             }
             else
             {
-                int turnChance = 1;
-                if (isWallTurn[i] == false)
-                {
-                    int turnChance = 1;
-                    if (turnChance == 1)
-                    {
-                        isWallTurn[i] = true;
-                    }
-                }
-                else
-                    isWallTurn[i] = false;
-                changeGhostMovement(i);
+                // int turnChance = 1;
+                // if (isWallTurn[i] == false)
+                // {
+                //     int turnChance = 1;
+                //     if (turnChance == 1)
+                //     {
+                //         isWallTurn[i] = true;
+                //     }
+                // }
+                // else
+                //     isWallTurn[i] = false;
+                // changeGhostMovement(i);
             }
         }
         else if (strcmp(ghostMovement[i], "right") == 0)
@@ -866,30 +964,41 @@ void *ghostThread(void *arg)
             newX += 1;
             if (isWallCollide(0, newX, newY) == false)
             {
-                ghostX[i] += 0.5;
-                //  checkGhostCoords(i);
+                ghostX[i] += 1;
+                checkGhostCoords(i);
             }
             else
             {
-                int turnChance = 1;
-                if (isWallTurn[i] == false)
-                {
-                    int turnChance = 1;
-                    if (turnChance == 1)
-                    {
-                        isWallTurn[i] = true;
-                    }
-                }
-                else
-                    isWallTurn[i] = false;
-                changeGhostMovement(i);
+                // int turnChance = 1;
+                // if (isWallTurn[i] == false)
+                // {
+                //     int turnChance = 1;
+                //     if (turnChance == 1)
+                //     {
+                //         isWallTurn[i] = true;
+                //     }
+                // }
+                // else
+                //     isWallTurn[i] = false;
+                // changeGhostMovement(i);
             }
             // printf("Ghost %d: %d\n", i, isWallTurn[i]);
         }
-        checkgraph();
+        printf("1 %d\n",i);
+        
+        int ghostVertex = checkClosest(ghostMovement[i],ghostX[i],ghostY[i]);
+        printf("9\n");
+        // printf("Ghost %d\n",ghostVertex);
+        int playerVertex = checkClosest(keypressed,x,y);
+        dijkstra(graph,playerVertex,ghostVertex);
+        
+        
+        break;
+        // int playerVertex = checkClosest()
+        // printf("%f    %f\n",ghostX[i] , ghostY[i]);
         // ghostMovementTry(i);
         glutPostRedisplay(); // Request redisplay
-        usleep(5000);
+        usleep(8000);
     }
     pthread_exit(NULL);
 }
