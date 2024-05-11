@@ -16,9 +16,12 @@
 // YAAANNNN
 //  Global variables for texture, position, and size
 // using my code here Hussnain
+
+int animationtimer = 10;
+
 bool stoppac;
-GLuint pacmanRight;
-GLuint pacmanLeft;
+GLuint pacmanRight[3];
+GLuint pacmanLeft[3];
 GLuint pacmanDown;
 GLuint pacmanUp;
 GLuint backgroundTextureID;
@@ -339,6 +342,7 @@ void loadTexture(const char *filename, GLuint *textureID)
     }
 }
 
+int currAnimation = 0;
 // Function to display the scene
 void display()
 {
@@ -402,13 +406,13 @@ void display()
     // Draw Pacman
     glEnable(GL_TEXTURE_2D);
     if (strcmp(keypressed, "left") == 0)
-        glBindTexture(GL_TEXTURE_2D, pacmanLeft);
+        glBindTexture(GL_TEXTURE_2D, pacmanLeft[currAnimation]);
     else if (strcmp(keypressed, "up") == 0)
         glBindTexture(GL_TEXTURE_2D, pacmanDown);
     else if (strcmp(keypressed, "down") == 0)
         glBindTexture(GL_TEXTURE_2D, pacmanUp);
     else
-        glBindTexture(GL_TEXTURE_2D, pacmanRight);
+        glBindTexture(GL_TEXTURE_2D, pacmanRight[currAnimation]);
     glBegin(GL_QUADS);
     glTexCoord2f(0, 0);
     glVertex2f(x, y);
@@ -698,8 +702,12 @@ void initOpenGL()
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    loadTexture("imgs/pacman/right.png", &pacmanRight);
-    loadTexture("imgs/pacman/left.png", &pacmanLeft);
+    loadTexture("imgs/pacman/right1.png", &pacmanRight[0]);
+    loadTexture("imgs/pacman/right2.png", &pacmanRight[1]);
+    loadTexture("imgs/pacman/right3.png", &pacmanRight[2]);
+    loadTexture("imgs/pacman/left.png", &pacmanLeft[0]);
+    loadTexture("imgs/pacman/left1.png", &pacmanLeft[1]);
+    loadTexture("imgs/pacman/left2.png", &pacmanLeft[2]);
     loadTexture("imgs/pacman/up.png", &pacmanUp);
     loadTexture("imgs/pacman/down.png", &pacmanDown);
     loadTexture("imgs/map/map.png", &backgroundTextureID);
@@ -916,6 +924,13 @@ void *gameEngineThread(void *arg)
     checkPowerupEatArr = malloc(powerupXYsize * sizeof(bool));
     while (1)
     {
+        animationtimer--;
+        if (animationtimer <= 0)
+        {
+            animationtimer = 20;
+            currAnimation = (currAnimation + 1) % 3;
+        }
+
         float newX = x;
         float newY = y;
         if (delayFlag)
