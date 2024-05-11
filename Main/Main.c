@@ -12,6 +12,7 @@
 #include <limits.h>
 #include <math.h>
 #include <time.h>
+#include <semaphore.h>
 // YAAANNNN
 //  Global variables for texture, position, and size
 // using my code here Hussnain
@@ -41,8 +42,12 @@ bool isWallTurn[2];
 int ghostHouseEnterance = 0; // 0 = ghost 1(pinky), 1 = ghost2(clyde), 2= ghost 3(inky)
 int houseYcoords[2] = {380, 410};
 int inHouse[3] = {true, true, true}; // checks which ghosts are in the house
-int ghostEnteranceTimer[2] = {100, 1000};
+int ghostEnteranceTimer[2] = {300, 1000};
 int ghostTimer = 0;
+sem_t exit_permit[2];
+bool exit_perm[2] = {false, false};
+bool key[2] = {false};
+// sem_t mainkey;
 
 // will increase timer by 1000 (per ghost)
 
@@ -202,9 +207,9 @@ void dijkstra(struct Graph *graph, int start, int end)
             current = current->next;
         }
     }
-    printSolution(dist, V, start, end);
-    printf("End %d \n", end);
-    // Print the shortest path if it exists
+    // printSolution(dist, V, start, end);
+    // printf("End %d \n", end);
+    //  Print the shortest path if it exists
     if (dist[end] != INT_MAX)
     {
         printf("Shortest path from vertex %d to vertex %d: ", start, end);
@@ -731,8 +736,13 @@ int main(int argc, char **argv)
 
     pthread_mutex_init(&lock, NULL);
 
+    for (int i = 0; i < 2; i++)
+    {
+        sem_init(&exit_permit[i], 0, 1);
+    }
+
     createGrapha();
-    printGraph(graph);
+    // printGraph(graph);
 
     int ghostNumber1 = 0;
     int ghostNumber2 = 1;
@@ -807,6 +817,107 @@ void checkGhostCoords(int ghostNum)
                     }
                 }
             }
+        }
+    }
+}
+
+void keyPermitCheck(int i)
+{
+    float newX = ghostX[i];
+    float newY = ghostY[i];
+    int EnteranceTimerCheck = 0;
+
+    int left = i - 1;
+    int right = (i) % 2;
+
+    if (i == 1 || i == 2)
+    {
+        EnteranceTimerCheck = 1;
+    }
+    if (ghostTimer >= ghostEnteranceTimer[EnteranceTimerCheck])
+    {
+        if (i == 1 || i == 2)
+        {
+            key[i - 1] = true;
+        }
+
+        if (key[i - 1] == true && exit_perm[i - 1] == false)
+        {
+            int left_try = sem_trywait(&exit_permit[left]);
+            int right_try = sem_trywait(&exit_permit[right]);
+            if (left_try == 0 && right_try == 0)
+            {
+                exit_perm[i - 1] = true;
+            }
+            else
+            {
+                if (strcmp(ghostMovement[i], "down") == 0)
+                {
+                    newY += 1;
+                    if (newY == houseYcoords[1])
+                    {
+                        strcpy(ghostMovement[i], "up");
+                    }
+                    else
+                        ghostY[i]++;
+                }
+                else if (strcmp(ghostMovement[i], "up") == 0)
+                {
+                    newY -= 1;
+                    if (newY == houseYcoords[0])
+                    {
+                        strcpy(ghostMovement[i], "down");
+                    }
+                    else
+                        ghostY[i]--;
+                }
+            }
+        }
+
+        // strcpy(ghostMovement[i], "down");
+        if (ghostX[i] == 285) // 285 = the x position of Enterance
+            ghostY[i]++;
+        else
+        {
+            if (exit_perm[i - 1] == true)
+            {
+                if (i == 1)
+                    ghostX[i]++;
+                else if (i == 2)
+                    ghostX[i]--;
+            }
+        }
+        if (ghostY[i] == 466) // 466 = the y position where the actual ghost movement will start
+        {
+            if (i == 1 || i == 2)
+            {
+                sem_post(&exit_permit[left]);
+                sem_post(&exit_permit[right]);
+            }
+            inHouse[i] = false;
+        }
+    }
+    else
+    {
+        if (strcmp(ghostMovement[i], "down") == 0)
+        {
+            newY += 1;
+            if (newY == houseYcoords[1])
+            {
+                strcpy(ghostMovement[i], "up");
+            }
+            else
+                ghostY[i]++;
+        }
+        else if (strcmp(ghostMovement[i], "up") == 0)
+        {
+            newY -= 1;
+            if (newY == houseYcoords[0])
+            {
+                strcpy(ghostMovement[i], "down");
+            }
+            else
+                ghostY[i]--;
         }
     }
 }
@@ -1112,54 +1223,10 @@ void *ghostThread(void *arg)
         // ghost house movements
         float newX = ghostX[i];
         float newY = ghostY[i];
-        int EnteranceTimerCheck = 0;
-        if (i == 1 || i == 2)
-        {
-            EnteranceTimerCheck = 1;
-        }
+
         if (inHouse[i] == true)
         {
-            if (ghostTimer >= ghostEnteranceTimer[EnteranceTimerCheck])
-            {
-
-                // strcpy(ghostMovement[i], "down");
-                if (ghostX[i] == 285) // 285 = the x position of Enterance
-                    ghostY[i]++;
-                else
-                {
-                    if (i == 1)
-                        ghostX[i]++;
-                    else if (i == 2)
-                        ghostX[i]--;
-                }
-                if (ghostY[i] == 466) // 466 = the y position where the actual ghost movement will start
-                {
-                    inHouse[i] = false;
-                }
-            }
-            else
-            {
-                if (strcmp(ghostMovement[i], "down") == 0)
-                {
-                    newY += 1;
-                    if (newY == houseYcoords[1])
-                    {
-                        strcpy(ghostMovement[i], "up");
-                    }
-                    else
-                        ghostY[i]++;
-                }
-                else if (strcmp(ghostMovement[i], "up") == 0)
-                {
-                    newY -= 1;
-                    if (newY == houseYcoords[0])
-                    {
-                        strcpy(ghostMovement[i], "down");
-                    }
-                    else
-                        ghostY[i]--;
-                }
-            }
+            keyPermitCheck(i);
         }
         else
         {
