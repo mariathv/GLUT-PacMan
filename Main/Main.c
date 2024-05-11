@@ -22,22 +22,31 @@ GLuint pacmanDown;
 GLuint pacmanUp;
 GLuint backgroundTextureID;
 GLuint foodTextureID;
-GLuint ghostTextureID[2];
+GLuint ghostTextureID[3];
 
 float x = 280.0f;
 float y = 195.0f;
 float side = 30.0f;
 
-float ghostX[2] = {20, 270};
-float ghostY[2] = {68, 466};
-bool ghostChase[2] = {true, true};
-int numGhost = 2;
-char ghostMovement[2][10];
-char ghostMovement[2][10];
-char ghostPrevMovement[2][10];
+float ghostX[3] = {285, 245, 330};
+float ghostY[3] = {395, 395, 395}; //(285,395)
+bool ghostChase[3] = {false, false, false};
+int numGhost = 3;
+char ghostMovement[3][10];
+char ghostMovement[3][10];
+char ghostPrevMovement[3][10];
 bool isWallTurn[2];
 
-              //   0    1   2    3   4    5    6    7    8    9    10   11   12   13   14   15   16   17   18   19   20   21    22  23   24   25   26   27   28   29   30    31   32   33   34   35  36   37   38   39   40   41   42  43   44   45    46   47   48   49   50   51   52   53   54   55   56   57   58  59    60   61   62   63  64   65   66   67  68  69   70   71   72    73   74   75   76   77   78   79   80   81    82  83   84   85   86   87   88   89   90
+// ghost house mechanics
+int ghostHouseEnterance = 0; // 0 = ghost 1(pinky), 1 = ghost2(clyde), 2= ghost 3(inky)
+int houseYcoords[2] = {380, 410};
+int inHouse[3] = {true, true, true}; // checks which ghosts are in the house
+int ghostEnteranceTimer[3] = {100, 1000, 1500};
+int ghostTimer = 0;
+
+// will increase timer by 1000 (per ghost)
+
+//   0    1   2    3   4    5    6    7    8    9    10   11   12   13   14   15   16   17   18   19   20   21    22  23   24   25   26   27   28   29   30    31   32   33   34   35  36   37   38   39   40   41   42  43   44   45    46   47   48   49   50   51   52   53   54   55   56   57   58  59    60   61   62   63  64   65   66   67  68  69   70   71   72    73   74   75   76   77   78   79   80   81    82  83   84   85   86   87   88   89   90
 // int xCoords[] = {20, 555, 20, 125, 20,  254, 20,  125, 20,  555, 319, 555, 447, 555, 447, 555, 0,   189, 315, 555, 125, 447, 190, 253, 317, 380, 20,  61,  20,  252, 509, 555, 189, 384, 189, 384, 384, 560, 320, 384, 189, 256, 20, 20,  61,  61,  125, 125, 20,  20,  254, 254, 555, 555, 319, 319, 447, 447, 555, 555, 509, 509, 253, 253, 317, 317, 20, 20, 315, 315, 555, 555 , 252, 252, 190, 190, 380, 380, 189, 189, 384, 384, 256, 256, 320, 320, 189, 189, 384, 384};
 // int yCoords[] = {60, 60 , 128,128, 685, 685, 531, 531, 596, 596, 685, 685, 531, 531, 128, 128, 395, 395, 262, 262, 195, 195, 128, 128, 128, 128, 195, 195, 262, 262, 195, 195, 466, 466, 330, 330, 395, 395, 531, 531, 531, 531, 60, 128, 128, 195, 128, 685, 531, 685, 596, 685, 531, 685, 596, 685, 128, 685, 60,  128, 128, 195, 60,  128, 60,  128, 195,262,195, 262, 195, 262,  195, 262, 128, 195, 128, 195, 262, 466, 262, 466, 466, 531, 466, 531, 531, 596, 531, 596};
 
@@ -51,9 +60,8 @@ int arrFoodx[] = {20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 220, 237, 253, 2
 int xCoords[] = {20, 555, 20, 125, 20, 254, 20, 125, 20, 555, 319, 555, 447, 555, 447, 555, 0, 189, 315, 555, 125, 447, 190, 253, 317, 380, 20, 61, 20, 252, 509, 555, 189, 384, 189, 384, 384, 560, 320, 384, 189, 256, 20, 20, 61, 61, 125, 125, 20, 20, 254, 254, 555, 555, 319, 319, 447, 447, 555, 555, 509, 509, 253, 253, 317, 317, 20, 20, 315, 315, 555, 555, 252, 252, 190, 190, 380, 380, 189, 189, 384, 384, 256, 256, 320, 320, 189, 189, 384, 384, 447, 125, 447, 125, 447, 254, 125, 447, 125};
 int yCoords[] = {60, 60, 128, 128, 685, 685, 531, 531, 596, 596, 685, 685, 531, 531, 128, 128, 395, 395, 262, 262, 195, 195, 128, 128, 128, 128, 195, 195, 262, 262, 195, 195, 466, 466, 330, 330, 395, 395, 531, 531, 531, 531, 60, 128, 128, 195, 128, 685, 531, 685, 596, 685, 531, 685, 596, 685, 128, 685, 60, 128, 128, 195, 60, 128, 60, 128, 195, 262, 195, 262, 195, 262, 195, 262, 128, 195, 128, 195, 262, 466, 262, 466, 466, 531, 466, 531, 531, 596, 531, 596, 262, 330, 330, 395, 395, 466, 596, 596, 262};
 
-
-int graphi[] = {0 ,0 ,1 ,1 ,2 ,2 ,3 ,3 ,4 ,4 ,5 ,5 ,6 ,6 ,7 ,7 ,7 ,8 ,8 ,8 ,9 ,9 ,9 ,10 ,10 ,11 ,11 ,12 ,12 ,12 ,13 ,13 ,14 ,14 ,15 ,15 ,17 ,17 ,17 ,18 ,18 ,19 ,19 ,20 ,20 ,20 ,21 ,21 ,21 ,98 ,98 ,98 ,98 ,23 ,23 ,24 ,24 ,25 ,25 ,26 ,26 ,27 ,27 ,28 ,28 ,30 ,30 ,31 ,31 ,32 ,32 ,33 ,33 ,34 ,34 ,34 ,35 ,35 ,35 ,36 ,36 ,36 ,38 ,38 ,39 ,39 ,40 ,40 ,41 ,41 ,44 ,44 ,44 ,47 ,47 ,47 ,62 ,62 ,62 ,64 ,64 ,64 ,60 ,60 ,60 ,75 ,75 ,75 ,72 ,72 ,72 ,68 ,68 ,68 ,77 ,77 ,77 ,78 ,78 ,78 ,80 ,80 ,80 ,90 ,90 ,90 ,90 ,91 ,91 ,92 ,92 ,93 ,93 ,93 ,94 ,94 ,94 ,95 ,95 ,95 ,84 ,84 ,84 ,96 ,96 ,96 ,96 ,87 ,87 ,87 ,50 ,50 ,50 ,54 ,54 ,54 ,89 ,89 ,89 ,97 ,97 ,97 ,97 ,57 ,57 ,57,29,29};
-int graphj[] = {2 ,62 ,15 ,64 ,0 ,44 ,44 ,20 ,8 ,47 ,47 ,50 ,8 ,7 ,96 ,6 ,93 ,6 ,96 ,4 ,13 ,11 ,97 ,54 ,57 ,9 ,57 ,94 ,13 ,97 ,12 ,9 ,60 ,21 ,1 ,60 ,93 ,34 ,32 ,68 ,80 ,31 ,90 ,3 ,75 ,98 ,14 ,77 ,90 ,20 ,28 ,78 ,91 ,22 ,62 ,64 ,25 ,24 ,77 ,28 ,27 ,26 ,44 ,26 ,98 ,60 ,31 ,30 ,19 ,17 ,95 ,36 ,84 ,78 ,17 ,35 ,80 ,34 ,36 ,35 ,94 ,33 ,84 ,39 ,38 ,89 ,87 ,41 ,40 ,95 ,2 ,3 ,27 ,4 ,96 ,5 ,0 ,23 ,64 ,62 ,24 ,1 ,14 ,30 ,15 ,20 ,21 ,72 ,75 ,29 ,68 ,72 ,18 ,77 ,68 ,25 ,21 ,98 ,34 ,29 ,18 ,35 ,90 ,80 ,21 ,19 ,92 ,98 ,93 ,90 ,94 ,91 ,17 ,7 ,92 ,36 ,12 ,32 ,41 ,84 ,95 ,38 ,33 ,8 ,7 ,87 ,47 ,96 ,40 ,50 ,87 ,54 ,5 ,50 ,10 ,89 ,54 ,39 ,97 ,89 ,12 ,9 ,57 ,10 ,97 ,11,72,78};
+int graphi[] = {0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 7, 8, 8, 8, 9, 9, 9, 10, 10, 11, 11, 12, 12, 12, 13, 13, 14, 14, 15, 15, 17, 17, 17, 18, 18, 19, 19, 20, 20, 20, 21, 21, 21, 98, 98, 98, 98, 23, 23, 24, 24, 25, 25, 26, 26, 27, 27, 28, 28, 30, 30, 31, 31, 32, 32, 33, 33, 34, 34, 34, 35, 35, 35, 36, 36, 36, 38, 38, 39, 39, 40, 40, 41, 41, 44, 44, 44, 47, 47, 47, 62, 62, 62, 64, 64, 64, 60, 60, 60, 75, 75, 75, 72, 72, 72, 68, 68, 68, 77, 77, 77, 78, 78, 78, 80, 80, 80, 90, 90, 90, 90, 91, 91, 92, 92, 93, 93, 93, 94, 94, 94, 95, 95, 95, 84, 84, 84, 96, 96, 96, 96, 87, 87, 87, 50, 50, 50, 54, 54, 54, 89, 89, 89, 97, 97, 97, 97, 57, 57, 57, 29, 29};
+int graphj[] = {2, 62, 15, 64, 0, 44, 44, 20, 8, 47, 47, 50, 8, 7, 96, 6, 93, 6, 96, 4, 13, 11, 97, 54, 57, 9, 57, 94, 13, 97, 12, 9, 60, 21, 1, 60, 93, 34, 32, 68, 80, 31, 90, 3, 75, 98, 14, 77, 90, 20, 28, 78, 91, 22, 62, 64, 25, 24, 77, 28, 27, 26, 44, 26, 98, 60, 31, 30, 19, 17, 95, 36, 84, 78, 17, 35, 80, 34, 36, 35, 94, 33, 84, 39, 38, 89, 87, 41, 40, 95, 2, 3, 27, 4, 96, 5, 0, 23, 64, 62, 24, 1, 14, 30, 15, 20, 21, 72, 75, 29, 68, 72, 18, 77, 68, 25, 21, 98, 34, 29, 18, 35, 90, 80, 21, 19, 92, 98, 93, 90, 94, 91, 17, 7, 92, 36, 12, 32, 41, 84, 95, 38, 33, 8, 7, 87, 47, 96, 40, 50, 87, 54, 5, 50, 10, 89, 54, 39, 97, 89, 12, 9, 57, 10, 97, 11, 72, 78};
 
 int xMidCoords[] = {447, 125, 447, 125, 447, 254, 125, 447, 125, 555};
 int yMidCoords[] = {262, 330, 330, 395, 395, 466, 596, 596, 262, 596};
@@ -169,7 +177,7 @@ void dijkstra(struct Graph *graph, int start, int end)
     int dist[V];
     bool sptSet[V];
 
-    printf("V size = %d ", V );
+    printf("V size = %d ", V);
     // Array to store the shortest path tree
     for (int i = 0; i < V; i++)
     {
@@ -431,6 +439,20 @@ void display()
     glVertex2f(x, y + (side * 1.0f)); // Adjusted the height of the quad
     glEnd();
     glDisable(GL_TEXTURE_2D);
+    // Draw Ghost INKY
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, ghostTextureID[2]);
+    glBegin(GL_QUADS);
+    glTexCoord2f(1, 1);
+    glVertex2f(ghostX[2], ghostY[2]);
+    glTexCoord2f(0, 1);
+    glVertex2f(ghostX[2] + side, ghostY[2]);
+    glTexCoord2f(0, 0);
+    glVertex2f(ghostX[2] + side, ghostY[2] + (side * 1.0f)); // Adjusted the height of the quad
+    glTexCoord2f(1, 0);
+    glVertex2f(ghostX[2], ghostY[2] + (side * 1.0f)); // Adjusted the height of the quad
+    glEnd();
+    glDisable(GL_TEXTURE_2D);
 
     // Draw Ghost PINKY
     glEnable(GL_TEXTURE_2D);
@@ -631,6 +653,7 @@ void keyboard(int key) // Primary key board function to handle user inputs
         }
         break;
     }
+    printPosition();
 }
 
 void movePacman(const char *direction) // A secondary Pacman move check function to check delay movement
@@ -691,6 +714,7 @@ void initOpenGL()
     loadTexture("imgs/food/dot.png", &foodTextureID);
     loadTexture("imgs/ghosts/pinky.png", &ghostTextureID[0]);
     loadTexture("imgs/ghosts/clyde.png", &ghostTextureID[1]);
+    loadTexture("imgs/ghosts/inky.png", &ghostTextureID[2]);
 }
 
 int main(int argc, char **argv)
@@ -712,11 +736,14 @@ int main(int argc, char **argv)
 
     int ghostNumber1 = 0;
     int ghostNumber2 = 1;
-    pthread_t EngineThread, playerThread, Ghost1, Ghost2, Ghost3, Ghost4;
+    int ghostNumber3 = 2;
+
+    pthread_t EngineThread, playerThread, Ghost1, Ghost2, Ghost3;
     pthread_create(&EngineThread, NULL, gameEngineThread, NULL);
     pthread_create(&playerThread, NULL, userInterfaceThread, NULL);
     pthread_create(&Ghost1, NULL, ghostThread, (void *)&ghostNumber1);
-    // pthread_create(&Ghost2, NULL, ghostThread, (void *)&ghostNumber2);
+    pthread_create(&Ghost2, NULL, ghostThread, (void *)&ghostNumber2);
+    pthread_create(&Ghost3, NULL, ghostThread, (void *)&ghostNumber3);
 
     glutMainLoop();
 
@@ -909,7 +936,7 @@ void changeGhostMovement(int ghostNum, int currAxis)
             newX += 1;
             if (isWallCollide(0, newX, newY) == true)
             {
-                printf("WALL COLLIDE STOP\n");
+                // printf("WALL COLLIDE STOP\n");
                 strcpy(ghostMovement[ghostNum], "left");
                 return;
             }
@@ -945,8 +972,8 @@ void findDirectionPath(int vertex, int i)
     float x = ghostX[i];
     float y = ghostY[i];
 
-    printf("Second Vertex Coords %f    %f\n" , x , y);
-    printf("Ghost Coords         %f    %f\n", ghostX[i] , ghostY[i]);
+    printf("Second Vertex Coords %f    %f\n", x, y);
+    printf("Ghost Coords         %f    %f\n", ghostX[i], ghostY[i]);
 
     if (x == xCoords[vertex])
     {
@@ -961,13 +988,13 @@ void findDirectionPath(int vertex, int i)
             if (y == yCoords[vertex])
             {
                 strcpy(ghostMovement[i], "down");
-                printf("Suggest  down\n" );
+                printf("Suggest  down\n");
                 break;
             }
             if (yy == yCoords[vertex])
             {
                 strcpy(ghostMovement[i], "up");
-                printf("Suggest  up\n" );
+                printf("Suggest  up\n");
                 break;
             }
         }
@@ -984,13 +1011,13 @@ void findDirectionPath(int vertex, int i)
             if (x == xCoords[vertex])
             {
                 strcpy(ghostMovement[i], "left");
-                printf("Suggest  left\n" );
+                printf("Suggest  left\n");
                 break;
             }
             if (xx == xCoords[vertex])
             {
                 strcpy(ghostMovement[i], "right");
-                printf("Suggest  right\n" );
+                printf("Suggest  right\n");
                 break;
             }
         }
@@ -1010,142 +1037,191 @@ void *ghostThread(void *arg)
     int playerVertex = -1;
     srand(time(0));
     changeGhostMovement(i, 0);
+    strcpy(ghostMovement[0], "down");
     while (1)
     {
-        if (ghostChase[i] == true)
+
+        // if (ghostChase[i] == true)
+        // {
+        //     if (applyShortedPath == false)
+        //     {
+        //         if (ghostVertex == -1)
+        //         {
+        //             ghostVertex = checkClosest(ghostMovement[i], ghostX[i], ghostY[i], "ghost");
+        //         }
+        //         else
+        //         {
+        //             ghostVertex = SecondVertex;
+        //         }
+        //         playerVertex = checkClosest(keypressed, x, y, "player");
+        //         printf("ghost Vertex = %d\n", ghostVertex);
+        //         printf("Player Vertex = %d\n", playerVertex);
+        //         if (ghostVertex != -1 && playerVertex != -1)
+        //         {
+        //             dijkstra(graph, playerVertex, ghostVertex);
+
+        //             int current = ghostVertex;
+        //             int j = 0;
+        //             while (current != -1)
+        //             {
+        //                 if (j == 0)
+        //                     firstVertex = current;
+        //                 if (j == 1)
+        //                     SecondVertex = current;
+        //                 j++;
+        //                 current = parent[current];
+        //             }
+        //             printf("\n\n");
+        //             printf("first Vertex = %d\n", firstVertex);
+        //             printf("second Vertex = %d\n", SecondVertex);
+        //             printf("current movement : %s\n", ghostMovement[i]);
+
+        //             if (firstReached == true)
+        //             {
+        //                 findDirectionPath(SecondVertex, i);
+        //             }
+        //             applyShortedPath = true;
+        //         }
+        //     }
+        //     if (applyShortedPath == true)
+        //     {
+        //         if (firstReached == false)
+        //         {
+        //             firstReached = checkVertexReached(firstVertex, i);
+        //             if (firstReached == true)
+        //             {
+        //                 printf("First Reached\n");
+        //                 findDirectionPath(SecondVertex, i);
+        //             }
+        //         }
+        //         if (firstReached == true && secondReached == false)
+        //         {
+        //             secondReached = checkVertexReached(SecondVertex, i);
+        //         }
+        //         if (secondReached == true)
+        //         {
+        //             printf("second Reached\n");
+        //             // firstReached = false;
+        //             secondReached = false;
+        //             applyShortedPath = false;
+        //             printf("\n\n\n");
+        //             continue;
+        //         }
+        //     }
+        // }
+        // ghost house movements
+        float newX = ghostX[i];
+        float newY = ghostY[i];
+        if (inHouse[i] == true)
         {
-            if (applyShortedPath == false)
+            if (ghostTimer >= ghostEnteranceTimer[i])
             {
-                if(ghostVertex == -1)
+
+                // strcpy(ghostMovement[i], "down");
+                if (ghostX[i] == 285) // 285 = the x position of Enterance
+                    ghostY[i]++;
+                else
                 {
-                    ghostVertex = checkClosest(ghostMovement[i], ghostX[i], ghostY[i], "ghost");
+                    if (i == 1)
+                        ghostX[i]++;
+                    else if (i == 2)
+                        ghostX[i]--;
+                }
+                if (ghostY[i] == 466) // 466 = the y position where the actual ghost movement will start
+                {
+                    inHouse[i] = false;
+                }
+            }
+            else
+            {
+                if (strcmp(ghostMovement[i], "down") == 0)
+                {
+                    newY += 1;
+                    if (newY == houseYcoords[1])
+                    {
+                        strcpy(ghostMovement[i], "up");
+                    }
+                    else
+                        ghostY[i]++;
+                }
+                else if (strcmp(ghostMovement[i], "up") == 0)
+                {
+                    newY -= 1;
+                    if (newY == houseYcoords[0])
+                    {
+                        strcpy(ghostMovement[i], "down");
+                    }
+                    else
+                        ghostY[i]--;
+                }
+            }
+        }
+        else
+        {
+
+            if (strcmp(ghostMovement[i], "down") == 0)
+            {
+                newY += 1;
+                if (isWallCollide(1, newX, newY) == false)
+                {
+                    ghostY[i] += 1;
+                    checkGhostCoords(i);
                 }
                 else
                 {
-                    ghostVertex = SecondVertex;
+                    if (ghostChase[i] == false)
+                        changeGhostMovement(i, 1);
                 }
-                playerVertex = checkClosest(keypressed, x, y, "player");
-                printf("ghost Vertex = %d\n" , ghostVertex);
-                printf("Player Vertex = %d\n" , playerVertex);
-                if (ghostVertex != -1 && playerVertex != -1)
+            }
+            else if (strcmp(ghostMovement[i], "up") == 0)
+            {
+                newY -= 1;
+                if (isWallCollide(1, newX, newY) == false)
                 {
-                    dijkstra(graph, playerVertex, ghostVertex);
-
-                    int current = ghostVertex;
-                    int j = 0;
-                    while (current != -1)
-                    {
-                        if (j == 0)
-                            firstVertex = current;
-                        if (j == 1)
-                            SecondVertex = current;
-                        j++;
-                        current = parent[current];
-                    }
-                    printf("\n\n");
-                    printf("first Vertex = %d\n",firstVertex);
-                    printf("second Vertex = %d\n",SecondVertex);
-                    printf("current movement : %s\n", ghostMovement[i]);
-
-
-                    if(firstReached == true)
-                    {
-                        findDirectionPath(SecondVertex , i);
-                    }                
-                    applyShortedPath = true;
+                    ghostY[i] -= 1;
+                    checkGhostCoords(i);
                 }
-            }
-            if (applyShortedPath == true)
-            {
-                if (firstReached == false)
+                else
                 {
-                    firstReached = checkVertexReached(firstVertex, i);
-                    if(firstReached == true)
-                    {   
-                        printf("First Reached\n");
-                        findDirectionPath(SecondVertex , i);
-                    }
+                    if (ghostChase[i] == false)
+                        changeGhostMovement(i, 1);
                 }
-                if (firstReached == true && secondReached == false)
+            }
+            else if (strcmp(ghostMovement[i], "left") == 0)
+            {
+                newX -= 1;
+                if (isWallCollide(0, newX, newY) == false)
                 {
-                    secondReached = checkVertexReached(SecondVertex, i);
+                    ghostX[i] -= 1;
+                    checkGhostCoords(i);
                 }
-                if (secondReached == true)
+                else
                 {
-                    printf("second Reached\n");
-                    // firstReached = false;
-                    secondReached = false;
-                    applyShortedPath = false;
-                    printf("\n\n\n");
-                    continue;
+                    if (ghostChase[i] == false)
+                        changeGhostMovement(i, 0);
                 }
             }
-        }
-
-        float newX = ghostX[i];
-        float newY = ghostY[i];
-        if (strcmp(ghostMovement[i], "down") == 0)
-        {
-            newY += 1;
-            if (isWallCollide(1, newX, newY) == false)
+            else if (strcmp(ghostMovement[i], "right") == 0)
             {
-                ghostY[i] += 1;
-                checkGhostCoords(i);
-            }
-            else
-            {
-                if (ghostChase[i] == false)
-                    changeGhostMovement(i, 1);
+                newX += 1;
+                if (isWallCollide(0, newX, newY) == false)
+                {
+                    ghostX[i] += 1;
+                    checkGhostCoords(i);
+                }
+                else
+                {
+                    if (ghostChase[i] == false)
+                        changeGhostMovement(i, 0);
+                }
+                // printf("Ghost %d: %d\n", i, isWallTurn[i]);
             }
         }
-        else if (strcmp(ghostMovement[i], "up") == 0)
-        {
-            newY -= 1;
-            if (isWallCollide(1, newX, newY) == false)
-            {
-                ghostY[i] -= 1;
-                checkGhostCoords(i);
-            }
-            else
-            {
-                if (ghostChase[i] == false)
-                    changeGhostMovement(i, 1);
-            }
-        }
-        else if (strcmp(ghostMovement[i], "left") == 0)
-        {
-            newX -= 1;
-            if (isWallCollide(0, newX, newY) == false)
-            {
-                ghostX[i] -= 1;
-                checkGhostCoords(i);
-            }
-            else
-            {
-                if (ghostChase[i] == false)
-                    changeGhostMovement(i, 0);
-            }
-        }
-        else if (strcmp(ghostMovement[i], "right") == 0)
-        {
-            newX += 1;
-            if (isWallCollide(0, newX, newY) == false)
-            {
-                ghostX[i] += 1;
-                checkGhostCoords(i);
-            }
-            else
-            {
-                if (ghostChase[i] == false)
-                    changeGhostMovement(i, 0);
-            }
-            // printf("Ghost %d: %d\n", i, isWallTurn[i]);
-        }
-        
 
         // break;
         // checkgraph();
         // ghostMovementTry(i);
+        ghostTimer++;
         glutPostRedisplay(); // Request redisplay
         usleep(10000);
     }
