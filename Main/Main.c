@@ -12,9 +12,7 @@
 #include <limits.h>
 #include <math.h>
 #include <time.h>
-// YAAANNNN
-//  Global variables for texture, position, and size
-// using my code here Hussnain
+
 bool stoppac;
 GLuint pacmanRight;
 GLuint pacmanLeft;
@@ -23,51 +21,51 @@ GLuint pacmanUp;
 GLuint backgroundTextureID;
 GLuint foodTextureID;
 GLuint ghostTextureID[2];
+GLuint powerupTexture;
 
 float x = 280.0f;
 float y = 195.0f;
 float side = 30.0f;
 
-float ghostX[2] = {20, 270};
-float ghostY[2] = {68, 466};
-bool ghostChase[2] = {true, true};
+float ghostX[2] = {270, 270};
+float ghostY[2] = {466, 466};
+bool ghostChase[2] = {false, false};
 int numGhost = 2;
 char ghostMovement[2][10];
 char ghostMovement[2][10];
 char ghostPrevMovement[2][10];
 bool isWallTurn[2];
 
-               //   0    1   2    3   4    5    6    7    8    9    10   11   12   13   14   15   16   17   18   19   20   21    22  23   24   25   26   27   28   29   30    31   32   33   34   35  36   37   38   39   40   41   42  43   44   45    46   47   48   49   50   51   52   53   54   55   56   57   58  59    60   61   62   63  64   65   66   67  68  69   70   71   72    73   74   75   76   77   78   79   80   81    82  83   84   85   86   87   88   89   90
-// int xCoords[] = {20, 555, 20, 125, 20,  254, 20,  125, 20,  555, 319, 555, 447, 555, 447, 555, 0,   189, 315, 555, 125, 447, 190, 253, 317, 380, 20,  61,  20,  252, 509, 555, 189, 384, 189, 384, 384, 560, 320, 384, 189, 256, 20, 20,  61,  61,  125, 125, 20,  20,  254, 254, 555, 555, 319, 319, 447, 447, 555, 555, 509, 509, 253, 253, 317, 317, 20, 20, 315, 315, 555, 555 , 252, 252, 190, 190, 380, 380, 189, 189, 384, 384, 256, 256, 320, 320, 189, 189, 384, 384};
-// int yCoords[] = {60, 60 , 128,128, 685, 685, 531, 531, 596, 596, 685, 685, 531, 531, 128, 128, 395, 395, 262, 262, 195, 195, 128, 128, 128, 128, 195, 195, 262, 262, 195, 195, 466, 466, 330, 330, 395, 395, 531, 531, 531, 531, 60, 128, 128, 195, 128, 685, 531, 685, 596, 685, 531, 685, 596, 685, 128, 685, 60,  128, 128, 195, 60,  128, 60,  128, 195,262,195, 262, 195, 262,  195, 262, 128, 195, 128, 195, 262, 466, 262, 466, 466, 531, 466, 531, 531, 596, 531, 596};
-
-float foody = 60.0f;
-float foodx = 20.0f; // Adjusted the size for clarity
 float foodside = 30.0f;
-                 
-int arrFoody[] = {60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 531, 531, 531, 531, 531, 531, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 531, 531, 531, 531, 531, 531, 531, 395, 395, 395, 395, 395, 395, 395, 395, 395, 395, 262, 262, 262, 262, 262, 262, 262, 262, 262, 262, 262, 262, 262, 195, 195, 195, 195, 195, 195, 195, 195, 195, 195, 195, 195, 195, 195, 195, 195, 195, 262, 262, 262, 262, 262, 262, 262, 262, 262, 262, 262, 262, 262, 195, 195, 195, 466, 466, 466, 466, 466, 466, 466, 466, 466, 466, 466, 330, 330, 330, 330, 330, 330, 330, 330, 330, 330, 330, 395, 395, 395, 395, 395, 395, 395, 395, 395, 395, 531, 531, 531, 531, 531, 531, 531, 531, 85, 107, 150, 170, 150, 173, 215, 240, 290, 310, 330, 350, 370, 420, 440, 460, 480, 505, 550, 570, 620, 640, 660, 150, 173, 215, 240, 290, 310, 330, 350, 370, 420, 440, 460, 480, 505, 550, 570, 620, 640, 660, 550, 570, 620, 640, 660, 555, 575, 620, 640, 660, 620, 640, 660, 85, 105, 150, 170, 80, 100, 80, 100, 220, 240, 220, 240, 220, 240, 150, 170, 150, 170, 285, 305, 350, 370, 420, 440, 285, 305, 350, 370, 420, 440, 490, 510, 490, 510, 550, 570, 550, 570, 620, 640, 660, 220, 240};
+float powerupSide = 24.0f;
+
+int arrPowerupx[] = {20 , 555 , 20 , 555};
+int arrPowerupy[] = {90 , 90 , 662 , 662};
+bool *checkPowerupEatArr;
+
 int arrFoodx[] = {20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 220, 237, 253, 273, 296, 317, 340, 360, 380, 400, 420, 440, 460, 480, 500, 520, 539, 555, 20, 40, 60, 80, 103, 125, 447, 463, 489, 509, 523, 539, 555, 190, 210, 230, 253, 317, 340, 360, 380, 20, 40, 60, 80, 100, 125, 140, 160, 180, 200, 220, 238, 254, 319, 340, 360, 380, 400, 420, 440, 460, 480, 500, 520, 539, 555, 20, 40, 60, 80, 103, 125, 20, 40, 60, 80, 100, 125, 140, 160, 180, 200, 220, 240, 260, 280, 300, 320, 340, 360, 380, 400, 423, 447, 463, 480, 500, 520, 539, 555, 447, 463, 482, 501, 520, 539, 555, 0, 20, 40, 60, 80, 100, 125, 143, 165, 189, 315, 338, 360, 380, 400, 420, 447, 463, 480, 501, 520, 539, 555, 125, 142, 160, 180, 200, 220, 240, 320, 340, 360, 380, 403, 425, 447, 20, 40, 61, 20, 40, 60, 80, 100, 125, 140, 160, 177, 193, 210, 230, 252, 509, 531, 555, 189, 204, 221, 240, 260, 280, 300, 320, 340, 362, 384, 189, 204, 221, 240, 260, 280, 300, 320, 340, 362, 384, 384, 400, 420, 447, 463, 480, 500, 520, 540, 560, 320, 340, 360, 384, 189, 213, 235, 256, 20, 20, 61, 61, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 447, 447, 447, 447, 447, 447, 447, 447, 447, 447, 447, 447, 447, 447, 447, 447, 447, 447, 447, 20, 20, 254, 254, 254, 555, 555, 555, 555, 555, 319, 319, 319, 555, 555, 509, 509, 253, 253, 317, 317, 20, 20, 315, 315, 555, 555, 190, 190, 380, 380, 189, 189, 189, 189, 189, 189, 384, 384, 384, 384, 384, 384, 256, 256, 320, 320, 189, 189, 384, 384, 20, 20, 20, 252, 252};
+int arrFoody[] = {60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 531, 531, 531, 531, 531, 531, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 531, 531, 531, 531, 531, 531, 531, 395, 395, 395, 395, 395, 395, 395, 395, 395, 395, 262, 262, 262, 262, 262, 262, 262, 262, 262, 262, 262, 262, 262, 195, 195, 195, 195, 195, 195, 195, 195, 195, 195, 195, 195, 195, 195, 195, 195, 195, 262, 262, 262, 262, 262, 262, 262, 262, 262, 262, 262, 262, 262, 195, 195, 195, 466, 466, 466, 466, 466, 466, 466, 466, 466, 466, 466, 330, 330, 330, 330, 330, 330, 330, 330, 330, 330, 330, 395, 395, 395, 395, 395, 395, 395, 395, 395, 395, 531, 531, 531, 531, 531, 531, 531, 531, 85, 107, 150, 170, 150, 173, 215, 240, 290, 310, 330, 350, 370, 420, 440, 460, 480, 505, 550, 570, 620, 640, 660, 150, 173, 215, 240, 290, 310, 330, 350, 370, 420, 440, 460, 480, 505, 550, 570, 620, 640, 660, 550, 570, 620, 640, 660, 555, 575, 620, 640, 660, 620, 640, 660, 85, 105, 150, 170, 80, 100, 80, 100, 220, 240, 220, 240, 220, 240, 150, 170, 150, 170, 285, 305, 350, 370, 420, 440, 285, 305, 350, 370, 420, 440, 490, 510, 490, 510, 550, 570, 550, 570, 620, 640, 660, 220, 240};
 
+               // 0   1    2    3    4     5    6    7    8    9    10    11    12    13   14   15   16   17   18   19   20   21   22   23   24    25    26    27   28    29  30   31   32   33    34   35   36   37  38   39  40    41   42   43   44   45  46   47  48   49  50  51  52  53  54  55  56   57  58  59  60  61  62  63  64   65
+int xCoords[] = {20, 20, 125, 61, 20, 20, 190, 253, 253, 317, 317, 380, 380, 315, 315, 447, 447, 509, 509, 555, 555, 555, 555, 252, 252, 190, 125, 189, 189, 384, 384, 315, 189, 189, 384, 320, 256, 256, 189, 189, 254, 254, 125, 20, 20, 20, 125, 319, 319, 384, 320, 447, 555, 555, 555, 447, 384, 384, 61, 125, 447, 447, 125, 125, 447, 384};
+int yCoords[] = {60, 128, 128, 195, 195, 262, 128, 128, 60, 128, 60, 128, 195, 195, 262, 195, 128, 195, 128, 128, 60, 195, 262, 195, 262, 195, 195, 262, 330, 330, 262, 262, 395, 466, 466, 466, 466, 531, 531, 596, 685, 596, 685, 696, 531, 596, 531, 685, 596, 531, 531, 685, 685, 596, 531, 531, 596, 395, 128, 262, 262, 395, 395, 596, 596, 395};
 
-               // 0   1    2    3    4     5    6    7    8    9    10    11    12    13   14   15   16   17   18   19   20   21   22   23   24    25    26    27   28    29  30   31   32   33    34   35   36   37  38   39  40    41   42   43   44   45  46   47  48   49  50  51  52  53  54  55  56   57  58  59  60  61  62  63  64   65                
-int xCoords[] = {20, 20,  125,  61,  20,  20 , 190, 253 ,253, 317 , 317 , 380 , 380 , 315 ,315 ,447 ,447 ,509, 509, 555, 555 ,555, 555, 252, 252, 190,  125,  189, 189,  384, 384, 315, 189, 189, 384, 320, 256, 256, 189, 189, 254, 254, 125, 20,  20,  20, 125, 319,319, 384,320,447,555,555,555,447,384,384, 61, 125,447,447,125,125,447,384};
-int yCoords[] = {60, 128, 128, 195, 195, 262, 128,  128, 60,  128,  60,   128,  195,  195, 262, 195, 128, 195, 128, 128, 60,  195, 262, 195, 262, 195,  195,  262, 330 , 330, 262, 262, 395, 466, 466, 466, 466, 531, 531, 596, 685, 596, 685, 696, 531, 596, 531,685,596,531,531,685, 685,596,531,531,596,395, 128,262,262,395,395,596,596,395};
-
-int graphi[] = {0,0, 8,8,8 , 10,10,10, 20,20  ,1,1  ,58,58,58 , 2 ,2,  6,6 , 7,7, 9,9 , 11 ,11 ,16,16, 18,18,18,  19,19, 4,4 ,3,3  , 26,26,26 , 25,25,25 , 23,23,23 , 13,13,13 ,12,12,12  , 15,15,15 , 17,17 , 21,21  , 5,5  ,59,59,59,59 , 27,27,27 , 24,24 , 14,14  , 60,60,60,60 , 22 ,22 , 62,62,62 , 32,32,32 , 57,57,57 ,61,61,61 , 33,33 , 36,36,36 , 35,35,35 , 44,44 , 46,46,46 ,38,38  , 37,37  , 50,50 , 49,49 , 55,55,55 , 54, 54  ,45,45,45  , 63,63,63,63 , 39,39,39 , 41,41,41   , 48,48,48 , 56,56,56, 64,64,64,64 , 53,53,53 , 43,43 , 42,42,42 , 40,40 , 47,47 , 51,51,51 , 52,52 , 28,28,28 , 29,29,29  , 30,30,30 , 31,31 , 34,34} ;
-int graphj[] = {1,8, 0,7,10, 8,9,20  , 10,19  ,52,0 ,1,2,3    , 52,26 ,7,25 ,8,6 ,11,10,9,12   ,15,18, 16,19,17,  18,20, 3,5 ,52,4 , 2,59,25 ,  6,26,23  , 25,24,13  ,23,12,14 , 11,15,13 , 12,16,60  ,18,21 , 17,22  , 4,59 , 5,26,27,62 , 59,28,24 , 27,23 , 30 ,13 , 30,15,22,61 , 60,21 , 59,32,46  , 62,28,33 ,29,61,34 ,60,57,55 , 32,36    ,33,37,35 , 36,50,34  , 45,46 , 62,44,63 , 37,39 , 36,38 ,35,49, 50,56    , 61,54,64  ,55 , 53 ,44,63,43 ,46,39,42,45  , 63, 38,41 , 39 , 48 ,40,47,41,56 , 48,49,64 , 56,55,53,51  ,54,64 , 52,45,42,43,63,40 ,41,42,  48, 51 , 47,64,52, 51,53  , 27,29,32 , 30 ,57,28,  14,60,29 , 13,30,35,57} ;
+int graphi[] = {0, 0, 8, 8, 8, 10, 10, 10, 20, 20, 1, 1, 58, 58, 58, 2, 2, 6, 6, 7, 7, 9, 9, 11, 11, 16, 16, 18, 18, 18, 19, 19, 4, 4, 3, 3, 26, 26, 26, 25, 25, 25, 23, 23, 23, 13, 13, 13, 12, 12, 12, 15, 15, 15, 17, 17, 21, 21, 5, 5, 59, 59, 59, 59, 27, 27, 27, 24, 24, 14, 14, 60, 60, 60, 60, 22, 22, 62, 62, 62, 32, 32, 32, 57, 57, 57, 61, 61, 61, 33, 33, 36, 36, 36, 35, 35, 35, 44, 44, 46, 46, 46, 38, 38, 37, 37, 50, 50, 49, 49, 55, 55, 55, 54, 54, 45, 45, 45, 63, 63, 63, 63, 39, 39, 39, 41, 41, 41, 48, 48, 48, 56, 56, 56, 64, 64, 64, 64, 53, 53, 53, 43, 43, 42, 42, 42, 40, 40, 47, 47, 51, 51, 51, 52, 52, 28, 28, 28, 29, 29, 29, 30, 30, 30, 31, 31, 34, 34};
+int graphj[] = {1, 8, 0, 7, 10, 8, 9, 20, 10, 19, 52, 0, 1, 2, 3, 52, 26, 7, 25, 8, 6, 11, 10, 9, 12, 15, 18, 16, 19, 17, 18, 20, 3, 5, 52, 4, 2, 59, 25, 6, 26, 23, 25, 24, 13, 23, 12, 14, 11, 15, 13, 12, 16, 60, 18, 21, 17, 22, 4, 59, 5, 26, 27, 62, 59, 28, 24, 27, 23, 30, 13, 30, 15, 22, 61, 60, 21, 59, 32, 46, 62, 28, 33, 29, 61, 34, 60, 57, 55, 32, 36, 33, 37, 35, 36, 50, 34, 45, 46, 62, 44, 63, 37, 39, 36, 38, 35, 49, 50, 56, 61, 54, 64, 55, 53, 44, 63, 43, 46, 39, 42, 45, 63, 38, 41, 39, 48, 40, 47, 41, 56, 48, 49, 64, 56, 55, 53, 51, 54, 64, 52, 45, 42, 43, 63, 40, 41, 42, 48, 51, 47, 64, 52, 51, 53, 27, 29, 32, 30, 57, 28, 14, 60, 29, 13, 30, 35, 57};
 
 int xMidCoords[] = {447, 125, 447, 125, 447, 254, 125, 447, 125, 555};
 int yMidCoords[] = {262, 330, 330, 395, 395, 466, 596, 596, 262, 596};
 
 int xDownMidCoords[] = {555};
 int yDownMidCoords[] = {596};
+
 int coordsXYSize = sizeof(yCoords) / sizeof(yCoords[0]);
 const int foodXYSize = sizeof(arrFoodx) / sizeof(arrFoodx[0]);
+int powerupXYsize = sizeof(arrPowerupx) / sizeof(arrPowerupx[0]);
 
-int ghostClosestVertex;
-int pacmanClosestVertex;
 
 bool *checkFoodEatArr;
+bool *checkPowerupEatArr;
 
 void *gameEngineThread(void *arg);
 void *userInterfaceThread(void *arg);
@@ -231,6 +229,16 @@ void createGrapha()
     }
 }
 
+void print()
+{
+    int size = sizeof(xCoords) / sizeof(xCoords[0]);
+    for (int i = 0; i < size; ++i)
+    {
+        printf("index : %d    --- vertex %d         %d\n", i, xCoords[i], yCoords[i]);
+        // printf("index =  %d \n",i );
+    }
+}
+
 int checkCorner(float x, float y)
 {
     int size = sizeof(xCoords) / sizeof(xCoords[0]);
@@ -242,16 +250,6 @@ int checkCorner(float x, float y)
         }
     }
     return -1;
-}
-
-void print()
-{
-    int size = sizeof(xCoords) / sizeof(xCoords[0]);
-    for (int i = 0; i < size; ++i)
-    {
-        printf("index : %d    --- vertex %d         %d\n", i, xCoords[i], yCoords[i]);
-        // printf("index =  %d \n",i );
-    }
 }
 
 int checkClosest(char *mov, float xposi, float yposi, char *type)
@@ -366,6 +364,25 @@ void display()
         glDisable(GL_TEXTURE_2D);
     }
 
+    for (int i = 0; i < powerupXYsize; ++i)
+    {
+        if(checkPowerupEatArr[i] == true)
+            continue;
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, powerupTexture);
+        glBegin(GL_QUADS);
+        glTexCoord2f(0, 0);
+        glVertex2f(arrPowerupx[i], arrPowerupy[i]);
+        glTexCoord2f(1, 0);
+        glVertex2f(arrPowerupx[i] + powerupSide, arrPowerupy[i]);
+        glTexCoord2f(1, 1);
+        glVertex2f(arrPowerupx[i] + powerupSide,arrPowerupy[i] + (powerupSide * 1.0f));
+        glTexCoord2f(0, 1);
+        glVertex2f(arrPowerupx[i], arrPowerupy[i] + (powerupSide * 1.0f));
+        glEnd();
+        glDisable(GL_TEXTURE_2D);
+    }
+
     // Draw Pacman
     glEnable(GL_TEXTURE_2D);
     if (strcmp(keypressed, "left") == 0)
@@ -445,6 +462,17 @@ void checkfoodEat()
         if (arrFoodx[i] == x && arrFoody[i] == y && checkFoodEatArr[i] == false)
         {
             checkFoodEatArr[i] = true;
+        }
+    }
+}
+
+void checkPowerupEat()
+{
+    for(int i = 0 ; i < powerupXYsize ; ++i)
+    {
+        if(arrPowerupx[i] == x && arrPowerupy[i] == y && checkPowerupEatArr[i] == false)
+        {
+            checkPowerupEatArr[i] = true;
         }
     }
 }
@@ -600,7 +628,6 @@ void movePacman(const char *direction) // A secondary Pacman move check function
         if (isWallCollide(0, newX, newY) == false)
         {
             strcpy(keypressed, "right");
-
         }
     }
     else if (strcmp(direction, "left") == 0)
@@ -648,6 +675,7 @@ void initOpenGL()
     loadTexture("imgs/food/dot.png", &foodTextureID);
     loadTexture("imgs/ghosts/pinky.png", &ghostTextureID[0]);
     loadTexture("imgs/ghosts/clyde.png", &ghostTextureID[1]);
+    loadTexture("imgs/food/Pellet_Medium.png" , &powerupTexture);
 }
 
 int main(int argc, char **argv)
@@ -664,18 +692,15 @@ int main(int argc, char **argv)
 
     pthread_mutex_init(&lock, NULL);
 
-
-
     createGrapha();
-    printGraph(graph);
-    print();
+
     int ghostNumber1 = 0;
     int ghostNumber2 = 1;
     pthread_t EngineThread, playerThread, Ghost1, Ghost2, Ghost3, Ghost4;
     pthread_create(&EngineThread, NULL, gameEngineThread, NULL);
     pthread_create(&playerThread, NULL, userInterfaceThread, NULL);
-    pthread_create(&Ghost1, NULL, ghostThread, (void *)&ghostNumber1);
-    // pthread_create(&Ghost2, NULL, ghostThread, (void *)&ghostNumber2);
+    // pthread_create(&Ghost1, NULL, ghostThread, (void *)&ghostNumber1);
+    pthread_create(&Ghost2, NULL, ghostThread, (void *)&ghostNumber2);
 
     glutMainLoop();
 
@@ -684,7 +709,6 @@ int main(int argc, char **argv)
 
 void checkGhostCoords(int ghostNum)
 {
-    printf("--------------------------------------------------------------------\n");
     srand(time(0));
     // int chance = 1;
 
@@ -747,6 +771,7 @@ void checkGhostCoords(int ghostNum)
 void *gameEngineThread(void *arg)
 {
     checkFoodEatArr = malloc(foodXYSize * sizeof(bool));
+    checkPowerupEatArr = malloc(powerupXYsize * sizeof(bool));
     while (1)
     {
         float newX = x;
@@ -770,7 +795,6 @@ void *gameEngineThread(void *arg)
             if (isWallCollide(1, newX, newY) == false)
             {
                 y += 0.5;
-                // printPosition();
             }
         }
         else if (strcmp(keypressed, "up") == 0)
@@ -779,7 +803,6 @@ void *gameEngineThread(void *arg)
             if (isWallCollide(1, newX, newY) == false)
             {
                 y -= 0.5;
-                // printPosition();
             }
         }
         else if (strcmp(keypressed, "left") == 0)
@@ -788,7 +811,6 @@ void *gameEngineThread(void *arg)
             if (isWallCollide(0, newX, newY) == false)
             {
                 x -= 0.5;
-                // printPosition();
             }
         }
         else if (strcmp(keypressed, "right") == 0)
@@ -797,12 +819,11 @@ void *gameEngineThread(void *arg)
             if (isWallCollide(0, newX, newY) == false)
             {
                 x += 0.5;
-                // printPosition();
             }
         }
 
         // printPosition();
-
+        checkPowerupEat();
         checkTeleport();
         checkfoodEat();
         glutPostRedisplay(); // Request redisplay
@@ -908,7 +929,6 @@ void findDirectionPath(int vertex, int i)
     printf("Second Vertex Coords %d    %d\n", xCoords[vertex], yCoords[vertex]);
     printf("Ghost Coords         %f    %f\n", ghostX[i], ghostY[i]);
 
-
     if (x == xCoords[vertex])
     {
         printf("X are Equal\n");
@@ -979,7 +999,7 @@ void *ghostThread(void *arg)
             {
                 printf("--------------------------------------------\n\n");
                 int ghostVertex;
-                if(firstReached == false)
+                if (firstReached == false)
                 {
                     ghostVertex = checkClosest(ghostMovement[i], ghostX[i], ghostY[i], "ghost");
                 }
@@ -990,7 +1010,6 @@ void *ghostThread(void *arg)
 
                 int pacmanVertex = checkClosest(keypressed, x, y, "pacman");
 
-
                 dijkstra(graph, pacmanVertex, ghostVertex);
 
                 secondVertex = -1;
@@ -998,7 +1017,7 @@ void *ghostThread(void *arg)
                 int current = ghostVertex;
                 while (current != -1)
                 {
-                    if(j== 0)
+                    if (j == 0)
                         firstVertex = current;
                     if (j == 1)
                         secondVertex = current;
@@ -1006,36 +1025,33 @@ void *ghostThread(void *arg)
                     current = parent[current];
                 }
 
-                printf("\n\nFirst Vertex = %d\n" , firstVertex );
-                printf("Second Vertex = %d\n" , secondVertex );
-                printf("Current movement = %s\n\n" , ghostMovement[i]);
+                printf("\n\nFirst Vertex = %d\n", firstVertex);
+                printf("Second Vertex = %d\n", secondVertex);
+                printf("Current movement = %s\n\n", ghostMovement[i]);
 
-
-                if(firstReached == true)
+                if (firstReached == true)
                 {
-                    findDirectionPath(secondVertex , i);
+                    findDirectionPath(secondVertex, i);
                 }
 
-                
                 applyShortedPath = true;
             }
 
-            if(firstReached == false)
+            if (firstReached == false)
             {
-                if(checkVertexReached(firstVertex , i))
+                if (checkVertexReached(firstVertex, i))
                 {
                     printf("First Vertex Reached\n");
                     firstReached = true;
-                    findDirectionPath(secondVertex , i);
+                    findDirectionPath(secondVertex, i);
                 }
-                
             }
-            if(firstReached == true && secondReached == false)
+            if (firstReached == true && secondReached == false)
             {
-                if(checkVertexReached(secondVertex , i))
+                if (checkVertexReached(secondVertex, i))
                     secondReached = true;
             }
-            if(secondReached == true)
+            if (secondReached == true)
             {
                 printf("Second Vertex Reached\n");
                 secondReached = false;
