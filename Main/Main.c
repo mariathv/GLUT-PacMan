@@ -18,12 +18,13 @@
 // using my code here Hussnain
 
 int animationtimer = 10;
+bool isWallCollision = false;
 
 bool stoppac;
 GLuint pacmanRight[3];
 GLuint pacmanLeft[3];
-GLuint pacmanDown;
-GLuint pacmanUp;
+GLuint pacmanDown[3];
+GLuint pacmanUp[3];
 GLuint backgroundTextureID;
 GLuint foodTextureID;
 
@@ -408,9 +409,9 @@ void display()
     if (strcmp(keypressed, "left") == 0)
         glBindTexture(GL_TEXTURE_2D, pacmanLeft[currAnimation]);
     else if (strcmp(keypressed, "up") == 0)
-        glBindTexture(GL_TEXTURE_2D, pacmanDown);
+        glBindTexture(GL_TEXTURE_2D, pacmanDown[currAnimation]);
     else if (strcmp(keypressed, "down") == 0)
-        glBindTexture(GL_TEXTURE_2D, pacmanUp);
+        glBindTexture(GL_TEXTURE_2D, pacmanUp[currAnimation]);
     else
         glBindTexture(GL_TEXTURE_2D, pacmanRight[currAnimation]);
     glBegin(GL_QUADS);
@@ -703,13 +704,17 @@ void initOpenGL()
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     loadTexture("imgs/pacman/right1.png", &pacmanRight[0]);
-    loadTexture("imgs/pacman/right2.png", &pacmanRight[1]);
+    loadTexture("imgs/pacman/common.png", &pacmanRight[1]);
     loadTexture("imgs/pacman/right3.png", &pacmanRight[2]);
-    loadTexture("imgs/pacman/left.png", &pacmanLeft[0]);
-    loadTexture("imgs/pacman/left1.png", &pacmanLeft[1]);
-    loadTexture("imgs/pacman/left2.png", &pacmanLeft[2]);
-    loadTexture("imgs/pacman/up.png", &pacmanUp);
-    loadTexture("imgs/pacman/down.png", &pacmanDown);
+    loadTexture("imgs/pacman/left1.png", &pacmanLeft[0]);
+    loadTexture("imgs/pacman/common.png", &pacmanLeft[1]);
+    loadTexture("imgs/pacman/left3.png", &pacmanLeft[2]);
+    loadTexture("imgs/pacman/up1.png", &pacmanUp[0]);
+    loadTexture("imgs/pacman/common.png", &pacmanUp[1]);
+    loadTexture("imgs/pacman/up3.png", &pacmanUp[2]);
+    loadTexture("imgs/pacman/down1.png", &pacmanDown[0]);
+    loadTexture("imgs/pacman/common.png", &pacmanDown[1]);
+    loadTexture("imgs/pacman/down3.png", &pacmanDown[2]);
     loadTexture("imgs/map/map.png", &backgroundTextureID);
     loadTexture("imgs/food/dot.png", &foodTextureID);
     loadTexture("imgs/ghosts/pinky.png", &ghostTextureID[0]);
@@ -924,12 +929,6 @@ void *gameEngineThread(void *arg)
     checkPowerupEatArr = malloc(powerupXYsize * sizeof(bool));
     while (1)
     {
-        animationtimer--;
-        if (animationtimer <= 0)
-        {
-            animationtimer = 20;
-            currAnimation = (currAnimation + 1) % 3;
-        }
 
         float newX = x;
         float newY = y;
@@ -995,6 +994,13 @@ void *userInterfaceThread(void *arg)
     glutSpecialFunc(keyboard);
     while (1)
     {
+        animationtimer--;
+        if (animationtimer <= 0)
+        {
+            animationtimer = 30;
+            currAnimation = (currAnimation + 1) % 3;
+        }
+        usleep(5000);
     }
     return NULL;
 }
@@ -1172,25 +1178,6 @@ void *ghostThread(void *arg)
 
                 dijkstra(graph, pacmanVertex, ghostVertex);
 
-                // if (ghostChase[i] == true)
-                // {
-                //     if (applyShortedPath == false)
-                //     {
-                //         if (ghostVertex == -1)
-                //         {
-                //             ghostVertex = checkClosest(ghostMovement[i], ghostX[i], ghostY[i], "ghost");
-                //         }
-                //         else
-                //         {
-                //             ghostVertex = SecondVertex;
-                //         }
-                //         playerVertex = checkClosest(keypressed, x, y, "player");
-                //         printf("ghost Vertex = %d\n", ghostVertex);
-                //         printf("Player Vertex = %d\n", playerVertex);
-                //         if (ghostVertex != -1 && playerVertex != -1)
-                //         {
-                //             dijkstra(graph, playerVertex, ghostVertex);
-
                 secondVertex = -1;
                 int j = 0;
                 int current = ghostVertex;
@@ -1207,21 +1194,6 @@ void *ghostThread(void *arg)
                 printf("\n\nFirst Vertex = %d\n", firstVertex);
                 printf("Second Vertex = %d\n", secondVertex);
                 printf("Current movement = %s\n\n", ghostMovement[i]);
-                //             int current = ghostVertex;
-                //             int j = 0;
-                //             while (current != -1)
-                //             {
-                //                 if (j == 0)
-                //                     firstVertex = current;
-                //                 if (j == 1)
-                //                     SecondVertex = current;
-                //                 j++;
-                //                 current = parent[current];
-                //             }
-                //             printf("\n\n");
-                //             printf("first Vertex = %d\n", firstVertex);
-                //             printf("second Vertex = %d\n", SecondVertex);
-                //             printf("current movement : %s\n", ghostMovement[i]);
 
                 if (firstReached == true)
                 {
