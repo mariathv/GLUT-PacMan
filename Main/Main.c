@@ -41,7 +41,7 @@ bool isWallTurn[2];
 int ghostHouseEnterance = 0; // 0 = ghost 1(pinky), 1 = ghost2(clyde), 2= ghost 3(inky)
 int houseYcoords[2] = {380, 410};
 int inHouse[3] = {true, true, true}; // checks which ghosts are in the house
-int ghostEnteranceTimer[3] = {100, 1000, 1500};
+int ghostEnteranceTimer[2] = {100, 1000};
 int ghostTimer = 0;
 
 // will increase timer by 1000 (per ghost)
@@ -1112,9 +1112,14 @@ void *ghostThread(void *arg)
         // ghost house movements
         float newX = ghostX[i];
         float newY = ghostY[i];
+        int EnteranceTimerCheck = 0;
+        if (i == 1 || i == 2)
+        {
+            EnteranceTimerCheck = 1;
+        }
         if (inHouse[i] == true)
         {
-            if (ghostTimer >= ghostEnteranceTimer[i])
+            if (ghostTimer >= ghostEnteranceTimer[EnteranceTimerCheck])
             {
 
                 // strcpy(ghostMovement[i], "down");
