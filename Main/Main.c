@@ -29,30 +29,27 @@ GLuint backgroundTextureID;
 GLuint foodTextureID;
 
 GLuint powerupTexture;
-GLuint ghostTextureID[3];
+GLuint ghostTextureID[4];
 
 float x = 280.0f;
 float y = 195.0f;
 float side = 30.0f;
 
-float ghostX[3] = {285, 245, 330};
-float ghostY[3] = {395, 395, 395}; //(285,395)
-bool ghostChase[3] = {false, false, false};
-int numGhost = 3;
-char ghostMovement[3][10];
-char ghostMovement[3][10];
-char ghostPrevMovement[3][10];
-bool isWallTurn[2];
+float ghostX[4] = {285, 245, 330, 285};
+float ghostY[4] = {405, 395, 395, 395}; //(285,395)
+bool ghostChase[4] = {false, false, false, false};
+int numGhost = 4;
+char ghostMovement[4][10];
 
 // ghost house mechanics
 int ghostHouseEnterance = 0; // 0 = ghost 1(pinky), 1 = ghost2(clyde), 2= ghost 3(inky)
 int houseYcoords[2] = {380, 410};
-int inHouse[3] = {true, true, true}; // checks which ghosts are in the house
-int ghostEnteranceTimer[2] = {300, 1000};
+int inHouse[4] = {true, true, true, true}; // checks which ghosts are in the house
+int ghostEnteranceTimer[2] = {0, 1000};
 int ghostTimer = 0;
-sem_t exit_permit[2];
-bool exit_perm[2] = {false, false};
-bool key[2] = {false};
+sem_t exit_permit[3];
+bool exit_perm[3] = {false, false, false};
+bool key[3] = {false, false, false};
 // sem_t mainkey;
 
 // will increase timer by 1000 (per ghost)
@@ -344,6 +341,8 @@ void loadTexture(const char *filename, GLuint *textureID)
 }
 
 int currAnimation = 0;
+
+int score = 0;
 // Function to display the scene
 void display()
 {
@@ -470,6 +469,21 @@ void display()
     glEnd();
     glDisable(GL_TEXTURE_2D);
 
+    // DRAW GHOST BLINKY
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, ghostTextureID[3]);
+    glBegin(GL_QUADS);
+    glTexCoord2f(1, 1);
+    glVertex2f(ghostX[3], ghostY[3]);
+    glTexCoord2f(0, 1);
+    glVertex2f(ghostX[3] + side, ghostY[3]);
+    glTexCoord2f(0, 0);
+    glVertex2f(ghostX[3] + side, ghostY[3] + (side * 1.0f)); // Adjusted the height of the quad
+    glTexCoord2f(1, 0);
+    glVertex2f(ghostX[3], ghostY[3] + (side * 1.0f)); // Adjusted the height of the quad
+    glEnd();
+    glDisable(GL_TEXTURE_2D);
+
     glutSwapBuffers();
 }
 
@@ -496,6 +510,7 @@ void checkfoodEat()
     {
         if (arrFoodx[i] == x && arrFoody[i] == y && checkFoodEatArr[i] == false)
         {
+            score++;
             checkFoodEatArr[i] = true;
         }
     }
@@ -721,6 +736,7 @@ void initOpenGL()
     loadTexture("imgs/ghosts/clyde.png", &ghostTextureID[1]);
     loadTexture("imgs/food/Pellet_Medium.png", &powerupTexture);
     loadTexture("imgs/ghosts/inky.png", &ghostTextureID[2]);
+    loadTexture("imgs/ghosts/blinky.png", &ghostTextureID[3]);
 }
 
 int main(int argc, char **argv)
@@ -737,7 +753,7 @@ int main(int argc, char **argv)
 
     pthread_mutex_init(&lock, NULL);
 
-    for (int i = 0; i < 2; i++)
+    for (int i = 0; i < 3; i++)
     {
         sem_init(&exit_permit[i], 0, 1);
     }
@@ -748,14 +764,15 @@ int main(int argc, char **argv)
     int ghostNumber1 = 0;
     int ghostNumber2 = 1;
     int ghostNumber3 = 2;
+    int ghostNumber4 = 3;
 
-    pthread_t EngineThread, playerThread, Ghost1, Ghost2, Ghost3;
+    pthread_t EngineThread, playerThread, Ghost1, Ghost2, Ghost3, Ghost4;
     pthread_create(&EngineThread, NULL, gameEngineThread, NULL);
     pthread_create(&playerThread, NULL, userInterfaceThread, NULL);
     pthread_create(&Ghost1, NULL, ghostThread, (void *)&ghostNumber1);
     pthread_create(&Ghost2, NULL, ghostThread, (void *)&ghostNumber2);
     pthread_create(&Ghost3, NULL, ghostThread, (void *)&ghostNumber3);
-
+    pthread_create(&Ghost4, NULL, ghostThread, (void *)&ghostNumber4);
     glutMainLoop();
 
     return 0;
@@ -829,50 +846,24 @@ void keyPermitCheck(int i)
     int EnteranceTimerCheck = 0;
 
     int left = i - 1;
-    int right = (i) % 2;
+    int right = (i) % 3;
 
-    if (i == 1 || i == 2)
+    if (i != 0)
     {
         EnteranceTimerCheck = 1;
     }
     if (ghostTimer >= ghostEnteranceTimer[EnteranceTimerCheck])
     {
-        if (i == 1 || i == 2)
+        if (i != 0)
         {
             key[i - 1] = true;
         }
 
         if (key[i - 1] == true && exit_perm[i - 1] == false)
         {
-            int left_try = sem_trywait(&exit_permit[left]);
-            int right_try = sem_trywait(&exit_permit[right]);
-            if (left_try == 0 && right_try == 0)
-            {
-                exit_perm[i - 1] = true;
-            }
-            else
-            {
-                if (strcmp(ghostMovement[i], "down") == 0)
-                {
-                    newY += 1;
-                    if (newY == houseYcoords[1])
-                    {
-                        strcpy(ghostMovement[i], "up");
-                    }
-                    else
-                        ghostY[i]++;
-                }
-                else if (strcmp(ghostMovement[i], "up") == 0)
-                {
-                    newY -= 1;
-                    if (newY == houseYcoords[0])
-                    {
-                        strcpy(ghostMovement[i], "down");
-                    }
-                    else
-                        ghostY[i]--;
-                }
-            }
+            sem_wait(&exit_permit[left]);
+            sem_wait(&exit_permit[right]);
+            exit_perm[i - 1] = true;
         }
 
         // strcpy(ghostMovement[i], "down");
@@ -890,8 +881,9 @@ void keyPermitCheck(int i)
         }
         if (ghostY[i] == 466) // 466 = the y position where the actual ghost movement will start
         {
-            if (i == 1 || i == 2)
+            if (i != 0)
             {
+                printf("ghost %d releasing permit\n", i + 1);
                 sem_post(&exit_permit[left]);
                 sem_post(&exit_permit[right]);
             }
@@ -994,6 +986,7 @@ void *userInterfaceThread(void *arg)
     glutSpecialFunc(keyboard);
     while (1)
     {
+        // printf("SCORE : %d\n", score);
         animationtimer--;
         if (animationtimer <= 0)
         {
