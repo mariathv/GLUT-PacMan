@@ -42,7 +42,6 @@ int numGhost = 4;
 char ghostMovement[4][10];
 
 // ghost house mechanics
-int ghostHouseEnterance = 0; // 0 = ghost 1(pinky), 1 = ghost2(clyde), 2= ghost 3(inky)
 int houseYcoords[2] = {380, 410};
 int inHouse[4] = {true, true, true, true}; // checks which ghosts are in the house
 int ghostEnteranceTimer[2] = {0, 1000};
@@ -100,6 +99,8 @@ pthread_mutex_t lock;
 bool delayFlag = false;
 
 int size;
+
+sem_t ghostyPanwomanCollisionSemaphore;
 
 bool isWallCollide(bool moveAxis, float xx, float yy);
 struct AdjListNode
@@ -343,6 +344,8 @@ void loadTexture(const char *filename, GLuint *textureID)
 int currAnimation = 0;
 
 int score = 0;
+
+int gameresetTimer = 0;
 // Function to display the scene
 void display()
 {
@@ -839,6 +842,21 @@ void checkGhostCoords(int ghostNum)
     }
 }
 
+bool ifGhostyPacwomanCollision(int ghostNum)
+{
+    for (int i = -20; i < 20; i++)
+    {
+        for (int j = -20; j < 20; j++)
+            if (ghostX[ghostNum] == x + i && ghostY[ghostNum] == y + j)
+            {
+                printf("collision ho rahi\n");
+                return true;
+            }
+    }
+
+    return false;
+}
+
 void keyPermitCheck(int i)
 {
     float newX = ghostX[i];
@@ -863,6 +881,7 @@ void keyPermitCheck(int i)
         {
             sem_wait(&exit_permit[left]);
             sem_wait(&exit_permit[right]);
+            // printf("ghost %d got permit\n", i + 1);
             exit_perm[i - 1] = true;
         }
 
@@ -883,7 +902,7 @@ void keyPermitCheck(int i)
         {
             if (i != 0)
             {
-                printf("ghost %d releasing permit\n", i + 1);
+
                 sem_post(&exit_permit[left]);
                 sem_post(&exit_permit[right]);
             }
@@ -892,6 +911,7 @@ void keyPermitCheck(int i)
     }
     else
     {
+        printf("ghost %d moving down\n", i + 1);
         if (strcmp(ghostMovement[i], "down") == 0)
         {
             newY += 1;
@@ -913,71 +933,6 @@ void keyPermitCheck(int i)
                 ghostY[i]--;
         }
     }
-}
-
-void *gameEngineThread(void *arg)
-{
-    checkFoodEatArr = malloc(foodXYSize * sizeof(bool));
-    checkPowerupEatArr = malloc(powerupXYsize * sizeof(bool));
-    while (1)
-    {
-
-        float newX = x;
-        float newY = y;
-        if (delayFlag)
-        {
-            movePacman(triedKeyPressed);
-
-            delayTimer -= 1;
-            if (delayTimer < 0)
-            {
-                delayTimer = 0;
-                strcpy(triedKeyPressed, "");
-                delayFlag = false;
-            }
-        }
-
-        if (strcmp(keypressed, "down") == 0)
-        {
-            newY += 0.5;
-            if (isWallCollide(1, newX, newY) == false)
-            {
-                y += 0.5;
-            }
-        }
-        else if (strcmp(keypressed, "up") == 0)
-        {
-            newY -= 0.5;
-            if (isWallCollide(1, newX, newY) == false)
-            {
-                y -= 0.5;
-            }
-        }
-        else if (strcmp(keypressed, "left") == 0)
-        {
-            newX -= 0.5;
-            if (isWallCollide(0, newX, newY) == false)
-            {
-                x -= 0.5;
-            }
-        }
-        else if (strcmp(keypressed, "right") == 0)
-        {
-            newX += 0.5;
-            if (isWallCollide(0, newX, newY) == false)
-            {
-                x += 0.5;
-            }
-        }
-
-        // printPosition();
-        checkPowerupEat();
-        checkTeleport();
-        checkfoodEat();
-        glutPostRedisplay(); // Request redisplay
-        usleep(5000);
-    }
-    return NULL;
 }
 
 void *userInterfaceThread(void *arg)
@@ -1077,6 +1032,56 @@ bool checkVertexReached(int vertex, int i)
     return false;
 }
 
+void gameReset()
+{
+    for (int i = 0; i < 4; i++)
+    {
+        inHouse[i] = true;
+    }
+    for (int i = 0; i < 3; ++i)
+    {
+        if (sem_destroy(&exit_permit[i]) != 0)
+        {
+            perror("Semaphore destruction failed");
+            // Handle error if needed
+            return 1;
+        }
+    }
+
+    // Reinitialize the semaphores
+    for (int i = 0; i < 3; ++i)
+    {
+        if (sem_init(&exit_permit[i], 0, 1) != 0)
+        {
+            perror("Semaphore reinitialization failed");
+            // Handle error if needed
+            return;
+        }
+    }
+
+    ghostX[0] = 285;
+    ghostX[1] = 245;
+    ghostX[2] = 330;
+    ghostX[3] = 285;
+
+    ghostY[0] = 405;
+    ghostY[1] = 395;
+    ghostY[2] = 395;
+    ghostY[3] = 395;
+
+    for (int i = 0; i < numGhost; i++)
+        strcpy(ghostMovement[i], "down");
+    ghostTimer = 0;
+
+    ghostTimer = 0;
+    for (int i = 0; i < 3; i++)
+    {
+        exit_perm[i] = false;
+        key[i] = false;
+    }
+    x = 280.0f;
+    y = 195.0f;
+}
 void findDirectionPath(int vertex, int i)
 {
     float x = ghostX[i];
@@ -1138,6 +1143,7 @@ void findDirectionPath(int vertex, int i)
 
 void *ghostThread(void *arg)
 {
+
     int i = *(int *)arg;
     printf("i : %d\n", i);
     int firstVertex = -1;
@@ -1149,9 +1155,26 @@ void *ghostThread(void *arg)
     int playerVertex = -1;
     srand(time(0));
     changeGhostMovement(i, 0);
-    strcpy(ghostMovement[0], "down");
+    for (int i = 0; i < numGhost; i++)
+        strcpy(ghostMovement[i], "down");
     while (1)
     {
+
+        printf("ghost %d thread\n", i + 1);
+        if (ifGhostyPacwomanCollision(i) == true)
+        {
+            printf("ghost ke saath collision\n");
+            while (1)
+            {
+                gameresetTimer++;
+                if (gameresetTimer >= 50)
+                {
+                    gameReset();
+                    break;
+                }
+                usleep(5000);
+            }
+        }
         if (ghostChase[i] == true)
         {
             if (applyShortedPath == false)
@@ -1222,9 +1245,9 @@ void *ghostThread(void *arg)
 
         float newX = ghostX[i];
         float newY = ghostY[i];
-
         if (inHouse[i] == true)
         {
+
             keyPermitCheck(i);
         }
         else
@@ -1297,4 +1320,71 @@ void *ghostThread(void *arg)
         usleep(10000);
     }
     pthread_exit(NULL);
+}
+
+void *gameEngineThread(void *arg)
+{
+    for (int i = 0; i < 4; i++)
+
+        checkFoodEatArr = malloc(foodXYSize * sizeof(bool));
+    checkPowerupEatArr = malloc(powerupXYsize * sizeof(bool));
+    while (1)
+    {
+
+        float newX = x;
+        float newY = y;
+        if (delayFlag)
+        {
+            movePacman(triedKeyPressed);
+
+            delayTimer -= 1;
+            if (delayTimer < 0)
+            {
+                delayTimer = 0;
+                strcpy(triedKeyPressed, "");
+                delayFlag = false;
+            }
+        }
+
+        if (strcmp(keypressed, "down") == 0)
+        {
+            newY += 0.5;
+            if (isWallCollide(1, newX, newY) == false)
+            {
+                y += 0.5;
+            }
+        }
+        else if (strcmp(keypressed, "up") == 0)
+        {
+            newY -= 0.5;
+            if (isWallCollide(1, newX, newY) == false)
+            {
+                y -= 0.5;
+            }
+        }
+        else if (strcmp(keypressed, "left") == 0)
+        {
+            newX -= 0.5;
+            if (isWallCollide(0, newX, newY) == false)
+            {
+                x -= 0.5;
+            }
+        }
+        else if (strcmp(keypressed, "right") == 0)
+        {
+            newX += 0.5;
+            if (isWallCollide(0, newX, newY) == false)
+            {
+                x += 0.5;
+            }
+        }
+
+        // printPosition();
+        checkPowerupEat();
+        checkTeleport();
+        checkfoodEat();
+        glutPostRedisplay(); // Request redisplay
+        usleep(5000);
+    }
+    return NULL;
 }
