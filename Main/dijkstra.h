@@ -96,7 +96,7 @@ int* dijkstra(struct Graph *graph, int start, int end)
     int V = graph->V;
     int dist[V];
     bool sptSet[V];
-    int *parent = malloc(60 * sizeof(int));
+    int *parent = malloc(66 * sizeof(int));
     printf("V size = %d ", V);
     // Array to store the shortest path tree
     for (int i = 0; i < V; i++)
@@ -145,11 +145,12 @@ int* dijkstra(struct Graph *graph, int start, int end)
 
 int* dijkstra2(struct Graph *graph, int start, int end)
 {
+
     int V = graph->V;
     int dist[V];
     bool sptSet[V];
     int *parent = malloc(V * sizeof(int));
-
+   
     // Initialize distances, shortest path set, and parent array
     for (int i = 0; i < V; i++)
     {

@@ -14,9 +14,118 @@
 #include <time.h>
 #include <semaphore.h>
 #include "dijkstra.h"
-#include "utility.h"
+// #include "utility.h"
 
 int currAnimation = 0;
+int animationtimer = 10;
+bool isWallCollision = false;
+
+bool stoppac;
+GLuint pacmanRight[3];
+GLuint pacmanLeft[3];
+GLuint pacmanDown[3];
+GLuint pacmanUp[3];
+GLuint backgroundTextureID;
+GLuint foodTextureID;
+
+GLuint powerupTexture;
+GLuint ghostTextureID[4];
+GLuint strawberryTexture;
+GLuint appleTexture;
+GLuint ghostFrightened;
+
+float x = 280.0f;
+float y = 195.0f;
+float side = 30.0f;
+
+float ghostX[4] = {285, 245, 330, 285};
+float ghostY[4] = {405, 395, 395, 395}; //(285,395)
+bool ghostChase[4] = {false, false, false, false};
+int ghostChaseTimer = -1;
+int numGhost = 4;
+char ghostMovement[4][10];
+
+// ghost house mechanics
+int houseYcoords[2] = {380, 410};
+int inHouse[4] = {true, true, true, true}; // checks which ghosts are in the house
+int ghostEnteranceTimer[2] = {0, 1000};
+int ghostTimer = 0;
+sem_t exit_permit[3];
+bool exit_perm[3] = {false, false, false};
+bool key[3] = {false, false, false};
+// sem_t mainkey;
+
+// will increase timer by 1000 (per ghost)
+
+float foodside = 30.0f;
+float powerupSide = 24.0f;
+
+int arrPowerupx[] = {20, 555, 20, 555};
+int arrPowerupy[] = {90, 90, 662, 662};
+bool *checkPowerupEatArr;
+bool powerUp = false;
+int powerUpTimer = -1;
+
+int arrFoodx[] = {20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 220, 237, 253, 273, 296, 317, 340, 360, 380, 400, 420, 440, 460, 480, 500, 520, 539, 555, 20, 40, 60, 80, 103, 125, 447, 463, 489, 509, 523, 539, 555, 190, 210, 230, 253, 317, 340, 360, 380, 20, 40, 60, 80, 100, 125, 140, 160, 180, 200, 220, 238, 254, 319, 340, 360, 380, 400, 420, 440, 460, 480, 500, 520, 539, 555, 20, 40, 60, 80, 103, 125, 20, 40, 60, 80, 100, 125, 140, 160, 180, 200, 220, 240, 260, 280, 300, 320, 340, 360, 380, 400, 423, 447, 463, 480, 500, 520, 539, 555, 447, 463, 482, 501, 520, 539, 555, 0, 20, 40, 60, 80, 100, 125, 143, 165, 189, 315, 338, 360, 380, 400, 420, 447, 463, 480, 501, 520, 539, 555, 125, 142, 160, 180, 200, 220, 240, 320, 340, 360, 380, 403, 425, 447, 20, 40, 61, 20, 40, 60, 80, 100, 125, 140, 160, 177, 193, 210, 230, 252, 509, 531, 555, 189, 204, 221, 240, 260, 280, 300, 320, 340, 362, 384, 189, 204, 221, 240, 260, 280, 300, 320, 340, 362, 384, 384, 400, 420, 447, 463, 480, 500, 520, 540, 560, 320, 340, 360, 384, 189, 213, 235, 256, 20, 20, 61, 61, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 447, 447, 447, 447, 447, 447, 447, 447, 447, 447, 447, 447, 447, 447, 447, 447, 447, 447, 447, 20, 20, 254, 254, 254, 555, 555, 555, 555, 555, 319, 319, 319, 555, 555, 509, 509, 253, 253, 317, 317, 20, 20, 315, 315, 555, 555, 190, 190, 380, 380, 189, 189, 189, 189, 189, 189, 384, 384, 384, 384, 384, 384, 256, 256, 320, 320, 189, 189, 384, 384, 20, 20, 20, 252, 252};
+int arrFoody[] = {60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 531, 531, 531, 531, 531, 531, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 531, 531, 531, 531, 531, 531, 531, 395, 395, 395, 395, 395, 395, 395, 395, 395, 395, 262, 262, 262, 262, 262, 262, 262, 262, 262, 262, 262, 262, 262, 195, 195, 195, 195, 195, 195, 195, 195, 195, 195, 195, 195, 195, 195, 195, 195, 195, 262, 262, 262, 262, 262, 262, 262, 262, 262, 262, 262, 262, 262, 195, 195, 195, 466, 466, 466, 466, 466, 466, 466, 466, 466, 466, 466, 330, 330, 330, 330, 330, 330, 330, 330, 330, 330, 330, 395, 395, 395, 395, 395, 395, 395, 395, 395, 395, 531, 531, 531, 531, 531, 531, 531, 531, 85, 107, 150, 170, 150, 173, 215, 240, 290, 310, 330, 350, 370, 420, 440, 460, 480, 505, 550, 570, 620, 640, 660, 150, 173, 215, 240, 290, 310, 330, 350, 370, 420, 440, 460, 480, 505, 550, 570, 620, 640, 660, 550, 570, 620, 640, 660, 555, 575, 620, 640, 660, 620, 640, 660, 85, 105, 150, 170, 80, 100, 80, 100, 220, 240, 220, 240, 220, 240, 150, 170, 150, 170, 285, 305, 350, 370, 420, 440, 285, 305, 350, 370, 420, 440, 490, 510, 490, 510, 550, 570, 550, 570, 620, 640, 660, 220, 240};
+
+// 0   1    2    3    4     5    6    7    8    9    10    11    12    13   14   15   16   17   18   19   20   21   22   23   24    25    26    27   28    29  30   31   32   33    34   35   36   37  38   39  40    41   42   43   44   45  46   47  48   49  50  51  52  53  54  55  56   57  58  59  60  61  62  63  64   65
+int xCoords[] = {20, 20, 125, 61, 20, 20, 190, 253, 253, 317, 317, 380, 380, 315, 315, 447, 447, 509, 509, 555, 555, 555, 555, 252, 252, 190, 125, 189, 189, 384, 384, 315, 189, 189, 384, 320, 256, 256, 189, 189, 254, 254, 125, 20, 20, 20, 125, 319, 319, 384, 320, 447, 555, 555, 555, 447, 384, 384, 61, 125, 447, 447, 125, 125, 447, 384};
+int yCoords[] = {60, 128, 128, 195, 195, 262, 128, 128, 60, 128, 60, 128, 195, 195, 262, 195, 128, 195, 128, 128, 60, 195, 262, 195, 262, 195, 195, 262, 330, 330, 262, 262, 395, 466, 466, 466, 466, 531, 531, 596, 685, 596, 685, 696, 531, 596, 531, 685, 596, 531, 531, 685, 685, 596, 531, 531, 596, 395, 128, 262, 262, 395, 395, 596, 596, 395};
+
+int graphi[] = {0, 0, 8, 8, 8, 10, 10, 10, 20, 20, 1, 1, 58, 58, 58, 2, 2, 6, 6, 7, 7, 9, 9, 11, 11, 16, 16, 18, 18, 18, 19, 19, 4, 4, 3, 3, 26, 26, 26, 25, 25, 25, 23, 23, 23, 13, 13, 13, 12, 12, 12, 15, 15, 15, 17, 17, 21, 21, 5, 5, 59, 59, 59, 59, 27, 27, 27, 24, 24, 14, 14, 60, 60, 60, 60, 22, 22, 62, 62, 62, 32, 32, 32, 57, 57, 57, 61, 61, 61, 33, 33, 36, 36, 36, 35, 35, 35, 44, 44, 46, 46, 46, 38, 38, 37, 37, 50, 50, 49, 49, 55, 55, 55, 54, 54, 45, 45, 45, 63, 63, 63, 63, 39, 39, 39, 41, 41, 41, 48, 48, 48, 56, 56, 56, 64, 64, 64, 64, 53, 53, 53, 43, 43, 42, 42, 42, 40, 40, 47, 47, 51, 51, 51, 52, 52, 28, 28, 28, 29, 29, 29, 30, 30, 30, 31, 31, 34, 34};
+int graphj[] = {1, 8, 0, 7, 10, 8, 9, 20, 10, 19, 52, 0, 1, 2, 3, 52, 26, 7, 25, 8, 6, 11, 10, 9, 12, 15, 18, 16, 19, 17, 18, 20, 3, 5, 52, 4, 2, 59, 25, 6, 26, 23, 25, 24, 13, 23, 12, 14, 11, 15, 13, 12, 16, 60, 18, 21, 17, 22, 4, 59, 5, 26, 27, 62, 59, 28, 24, 27, 23, 30, 13, 30, 15, 22, 61, 60, 21, 59, 32, 46, 62, 28, 33, 29, 61, 34, 60, 57, 55, 32, 36, 33, 37, 35, 36, 50, 34, 45, 46, 62, 44, 63, 37, 39, 36, 38, 35, 49, 50, 56, 61, 54, 64, 55, 53, 44, 63, 43, 46, 39, 42, 45, 63, 38, 41, 39, 48, 40, 47, 41, 56, 48, 49, 64, 56, 55, 53, 51, 54, 64, 52, 45, 42, 43, 63, 40, 41, 42, 48, 51, 47, 64, 52, 51, 53, 27, 29, 32, 30, 57, 28, 14, 60, 29, 13, 30, 35, 57};
+struct Graph *graph;
+
+int xMidCoords[] = {447, 125, 447, 125, 447, 254, 125, 447, 125, 555};
+int yMidCoords[] = {262, 330, 330, 395, 395, 466, 596, 596, 262, 596};
+
+int xDownMidCoords[] = {555};
+int yDownMidCoords[] = {596};
+
+int coordsXYSize = sizeof(yCoords) / sizeof(yCoords[0]);
+const int foodXYSize = sizeof(arrFoodx) / sizeof(arrFoodx[0]);
+int powerupXYsize = sizeof(arrPowerupx) / sizeof(arrPowerupx[0]);
+
+bool *checkFoodEatArr;
+bool *checkPowerupEatArr;
+
+void *gameEngineThread(void *arg);
+void *userInterfaceThread(void *arg);
+void *ghostThread(void *arg);
+
+char triedKeyPressed[10];
+int delayTimer = 0;
+char keypressed[10] = "up";
+char delayKey[10];
+char prevkeypressed[10];
+int *parent;
+
+pthread_mutex_t lock;
+
+bool delayFlag = false;
+
+int size;
+
+bool poweUpEaten = false;
+
+int timer;
+int fruitX[4] = {-1, -1, -1, -1};
+int fruitY[4] = {-1, -1, -1, -1};
+int fruitType[4] = {-1, -1, -1, -1};
+int fruitCount = 0;
+float fruitSide = 20.0f;
+
+int score = 0;
+
+int gameresetTimer = 0;
+
+sem_t ghostyPanwomanCollisionSemaphore;
+
+sem_t mutex, wrt;
+int readCount;
+
+bool isWallCollide(bool moveAxis, float xx, float yy);
 
 void createGrapha()
 {
@@ -129,6 +238,7 @@ void loadTexture(const char *filename, GLuint *textureID)
     }
 }
 
+// Function to display the scene
 void display()
 {
     glClear(GL_COLOR_BUFFER_BIT);
@@ -136,7 +246,6 @@ void display()
 
     // Draw the background map
     glEnable(GL_TEXTURE_2D);
-
     glBindTexture(GL_TEXTURE_2D, backgroundTextureID);
     glBegin(GL_QUADS);
     glTexCoord2f(0, 0);
@@ -150,6 +259,8 @@ void display()
     glEnd();
     glDisable(GL_TEXTURE_2D);
 
+
+    //Draw food Dot on the Map
     for (int i = 0; i < foodXYSize; ++i)
     {
         if (checkFoodEatArr[i])
@@ -169,6 +280,7 @@ void display()
         glDisable(GL_TEXTURE_2D);
     }
 
+    //Draw Power up on the map
     for (int i = 0; i < powerupXYsize; ++i)
     {
         if (checkPowerupEatArr[i] == true)
@@ -188,9 +300,12 @@ void display()
         glDisable(GL_TEXTURE_2D);
     }
 
+    //Draw Fruit on the map
     for (int i = 0; i < fruitCount; ++i)
     {
-        if (i < 2)
+        if (fruitX[i] == -1 && fruitY[i] == -1)
+            continue;
+        if(fruitType == 0)
         {
             glEnable(GL_TEXTURE_2D);
             glBindTexture(GL_TEXTURE_2D, strawberryTexture);
@@ -229,9 +344,9 @@ void display()
     if (strcmp(keypressed, "left") == 0)
         glBindTexture(GL_TEXTURE_2D, pacmanLeft[currAnimation]);
     else if (strcmp(keypressed, "up") == 0)
-        glBindTexture(GL_TEXTURE_2D, pacmanDown);
+        glBindTexture(GL_TEXTURE_2D, pacmanDown[currAnimation]);
     else if (strcmp(keypressed, "down") == 0)
-        glBindTexture(GL_TEXTURE_2D, pacmanUp);
+        glBindTexture(GL_TEXTURE_2D, pacmanUp[currAnimation]);
     else
         glBindTexture(GL_TEXTURE_2D, pacmanRight[currAnimation]);
     glBegin(GL_QUADS);
@@ -245,9 +360,13 @@ void display()
     glVertex2f(x, y + (side * 1.0f)); // Adjusted the height of the quad
     glEnd();
     glDisable(GL_TEXTURE_2D);
+
     // Draw Ghost INKY
     glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, ghostTextureID[2]);
+    if(!powerUp)
+        glBindTexture(GL_TEXTURE_2D, ghostTextureID[2]);
+    else
+        glBindTexture(GL_TEXTURE_2D, ghostFrightened);
     glBegin(GL_QUADS);
     glTexCoord2f(1, 1);
     glVertex2f(ghostX[2], ghostY[2]);
@@ -262,7 +381,10 @@ void display()
 
     // Draw Ghost PINKY
     glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, ghostTextureID[0]);
+    if(!powerUp)
+        glBindTexture(GL_TEXTURE_2D, ghostTextureID[0]);
+    else
+        glBindTexture(GL_TEXTURE_2D, ghostFrightened);
     glBegin(GL_QUADS);
     glTexCoord2f(1, 1);
     glVertex2f(ghostX[0], ghostY[0]);
@@ -277,16 +399,37 @@ void display()
 
     // DRAW GHOST CLYDE
     glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, ghostTextureID[1]);
+    if(!powerUp)
+        glBindTexture(GL_TEXTURE_2D, ghostTextureID[1]);
+    else
+        glBindTexture(GL_TEXTURE_2D, ghostFrightened);
     glBegin(GL_QUADS);
     glTexCoord2f(1, 1);
     glVertex2f(ghostX[1], ghostY[1]);
     glTexCoord2f(0, 1);
-    glVertex2f(ghostX[1] + fruitSide, ghostY[1]);
+    glVertex2f(ghostX[1] + side, ghostY[1]);
     glTexCoord2f(0, 0);
-    glVertex2f(ghostX[1] + fruitSide, ghostY[1] + (fruitSide * 1.0f)); // Adjusted the height of the quad
+    glVertex2f(ghostX[1] + side, ghostY[1] + (side * 1.0f)); // Adjusted the height of the quad
     glTexCoord2f(1, 0);
-    glVertex2f(ghostX[1], ghostY[1] + (fruitSide * 1.0f)); // Adjusted the height of the quad
+    glVertex2f(ghostX[1], ghostY[1] + (side * 1.0f)); // Adjusted the height of the quad
+    glEnd();
+    glDisable(GL_TEXTURE_2D);
+
+    // DRAW GHOST BLINKY
+    glEnable(GL_TEXTURE_2D);
+    if(!powerUp)
+        glBindTexture(GL_TEXTURE_2D, ghostTextureID[3]);
+    else
+        glBindTexture(GL_TEXTURE_2D, ghostFrightened);
+    glBegin(GL_QUADS);
+    glTexCoord2f(1, 1);
+    glVertex2f(ghostX[3], ghostY[3]);
+    glTexCoord2f(0, 1);
+    glVertex2f(ghostX[3] + side, ghostY[3]);
+    glTexCoord2f(0, 0);
+    glVertex2f(ghostX[3] + side, ghostY[3] + (side * 1.0f)); // Adjusted the height of the quad
+    glTexCoord2f(1, 0);
+    glVertex2f(ghostX[3], ghostY[3] + (side * 1.0f)); // Adjusted the height of the quad
     glEnd();
     glDisable(GL_TEXTURE_2D);
 
@@ -316,6 +459,7 @@ void checkfoodEat()
     {
         if (arrFoodx[i] == x && arrFoody[i] == y && checkFoodEatArr[i] == false)
         {
+            score++;
             checkFoodEatArr[i] = true;
         }
     }
@@ -329,6 +473,29 @@ void checkPowerupEat()
         {
             poweUpEaten = true;
             checkPowerupEatArr[i] = true;
+            powerUp = true;
+            powerUpTimer = 1500;
+            for(int i = 0 ; i < 4;  ++i)
+            {
+                ghostChase[i] = true;
+            }
+        }
+    }
+}
+
+void checkFruitEatFunction()
+{
+    for (int i = 0; i < fruitCount; ++i)
+    {
+        if (fruitX[i] == x && fruitY[i] == y)
+        {
+            fruitX[i] = -1;
+            fruitY[i] = -1;
+            fruitType[i] = -1;
+            fruitCount -= 1;
+            ghostChase[0] = true;
+            ghostChase[1] = true;
+            ghostChaseTimer = 1500;
         }
     }
 }
@@ -581,13 +748,6 @@ void changeGhostMovement(int ghostNum, int currAxis)
     }
 }
 
-bool checkVertexReached(int vertex, int i)
-{
-    if (ghostX[i] == xCoords[vertex] && ghostY[i] == yCoords[vertex])
-        return true;
-    return false;
-}
-
 void findDirectionPath(int vertex, int i)
 {
     float x = ghostX[i];
@@ -706,6 +866,21 @@ void checkGhostCoords(int ghostNum)
     }
 }
 
+bool ifGhostyPacwomanCollision(int ghostNum)
+{
+    for (int i = -20; i < 20; i++)
+    {
+        for (int j = -20; j < 20; j++)
+            if (ghostX[ghostNum] == x + i && ghostY[ghostNum] == y + j)
+            {
+                printf("collision ho rahi\n");
+                return true;
+            }
+    }
+
+    return false;
+}
+
 void keyPermitCheck(int i)
 {
     float newX = ghostX[i];
@@ -713,53 +888,27 @@ void keyPermitCheck(int i)
     int EnteranceTimerCheck = 0;
 
     int left = i - 1;
-    int right = (i) % 2;
+    int right = (i) % 3;
 
-    if (i == 1 || i == 2)
+    if (i != 0)
     {
         EnteranceTimerCheck = 1;
     }
     if (ghostTimer >= ghostEnteranceTimer[EnteranceTimerCheck])
     {
-        if (i == 1 || i == 2)
+        if (i != 0)
         {
             key[i - 1] = true;
         }
 
         if (key[i - 1] == true && exit_perm[i - 1] == false)
         {
-            int left_try = sem_trywait(&exit_permit[left]);
-            int right_try = sem_trywait(&exit_permit[right]);
-            if (left_try == 0 && right_try == 0)
-            {
-                exit_perm[i - 1] = true;
-            }
-            else
-            {
-                if (strcmp(ghostMovement[i], "down") == 0)
-                {
-                    newY += 1;
-                    if (newY == houseYcoords[1])
-                    {
-                        strcpy(ghostMovement[i], "up");
-                    }
-                    else
-                        ghostY[i]++;
-                }
-                else if (strcmp(ghostMovement[i], "up") == 0)
-                {
-                    newY -= 1;
-                    if (newY == houseYcoords[0])
-                    {
-                        strcpy(ghostMovement[i], "down");
-                    }
-                    else
-                        ghostY[i]--;
-                }
-            }
+            sem_wait(&exit_permit[left]);
+            sem_wait(&exit_permit[right]);
+            // printf("ghost %d got permit\n", i + 1);
+            exit_perm[i - 1] = true;
         }
 
-        // strcpy(ghostMovement[i], "down");
         if (ghostX[i] == 285) // 285 = the x position of Enterance
             ghostY[i]++;
         else
@@ -774,8 +923,9 @@ void keyPermitCheck(int i)
         }
         if (ghostY[i] == 466) // 466 = the y position where the actual ghost movement will start
         {
-            if (i == 1 || i == 2)
+            if (i != 0)
             {
+
                 sem_post(&exit_permit[left]);
                 sem_post(&exit_permit[right]);
             }
@@ -807,6 +957,13 @@ void keyPermitCheck(int i)
     }
 }
 
+bool checkVertexReached(int vertex, int i)
+{
+    if (ghostX[i] == xCoords[vertex] && ghostY[i] == yCoords[vertex])
+        return true;
+    return false;
+}
+
 void checkGhostLineOfSight(int i) // function to check if pacman come in line of sight start following
 {
     int yup = ghostY[i];
@@ -832,6 +989,8 @@ void checkGhostLineOfSight(int i) // function to check if pacman come in line of
         if (yup == y && ghostX[i] == x && up == false)
         {
             strcpy(ghostMovement[i], "up");
+            if(powerUp)
+                strcpy(ghostMovement[i], "down");
             return;
         }
 
@@ -842,6 +1001,8 @@ void checkGhostLineOfSight(int i) // function to check if pacman come in line of
         if (ydown == y && ghostX[i] == x && down == false)
         {
             strcpy(ghostMovement[i], "down");
+            if(powerUp)
+                strcpy(ghostMovement[i], "up");
             return;
         }
 
@@ -855,6 +1016,8 @@ void checkGhostLineOfSight(int i) // function to check if pacman come in line of
         if (ghostY[i] == y && xleft == x && left == false)
         {
             strcpy(ghostMovement[i], "left");
+            if(powerUp)
+                strcpy(ghostMovement[i], "right");
             return;
         }
 
@@ -865,12 +1028,63 @@ void checkGhostLineOfSight(int i) // function to check if pacman come in line of
         if (ghostY[i] == y && xright == x && right == false)
         {
             strcpy(ghostMovement[i], "right");
+            if(powerUp)
+                strcpy(ghostMovement[i], "left");
             return;
         }
 
         if (up && down && left && right)
             return;
     }
+}
+
+void gameReset()
+{
+    for (int i = 0; i < 4; i++)
+    {
+        inHouse[i] = true;
+    }
+    for (int i = 0; i < 3; ++i)
+    {
+        if (sem_destroy(&exit_permit[i]) != 0)
+        {
+            perror("Semaphore destruction failed");
+            return;
+        }
+    }
+
+    // Reinitialize the semaphores
+    for (int i = 0; i < 3; ++i)
+    {
+        if (sem_init(&exit_permit[i], 0, 1) != 0)
+        {
+            perror("Semaphore reinitialization failed");
+            return;
+        }
+    }
+
+    ghostX[0] = 285;
+    ghostX[1] = 245;
+    ghostX[2] = 330;
+    ghostX[3] = 285;
+
+    ghostY[0] = 405;
+    ghostY[1] = 395;
+    ghostY[2] = 395;
+    ghostY[3] = 395;
+
+    for (int i = 0; i < numGhost; i++)
+        strcpy(ghostMovement[i], "down");
+    ghostTimer = 0;
+
+    ghostTimer = 0;
+    for (int i = 0; i < 3; i++)
+    {
+        exit_perm[i] = false;
+        key[i] = false;
+    }
+    x = 280.0f;
+    y = 195.0f;
 }
 
 void initOpenGL()
@@ -884,21 +1098,27 @@ void initOpenGL()
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     loadTexture("imgs/pacman/right1.png", &pacmanRight[0]);
-    loadTexture("imgs/pacman/right2.png", &pacmanRight[1]);
+    loadTexture("imgs/pacman/common.png", &pacmanRight[1]);
     loadTexture("imgs/pacman/right3.png", &pacmanRight[2]);
-    loadTexture("imgs/pacman/left.png", &pacmanLeft[0]);
-    loadTexture("imgs/pacman/left1.png", &pacmanLeft[1]);
-    loadTexture("imgs/pacman/left2.png", &pacmanLeft[2]);
-    loadTexture("imgs/pacman/up.png", &pacmanUp);
-    loadTexture("imgs/pacman/down.png", &pacmanDown);
+    loadTexture("imgs/pacman/left1.png", &pacmanLeft[0]);
+    loadTexture("imgs/pacman/common.png", &pacmanLeft[1]);
+    loadTexture("imgs/pacman/left3.png", &pacmanLeft[2]);
+    loadTexture("imgs/pacman/up1.png", &pacmanUp[0]);
+    loadTexture("imgs/pacman/common.png", &pacmanUp[1]);
+    loadTexture("imgs/pacman/up3.png", &pacmanUp[2]);
+    loadTexture("imgs/pacman/down1.png", &pacmanDown[0]);
+    loadTexture("imgs/pacman/common.png", &pacmanDown[1]);
+    loadTexture("imgs/pacman/down3.png", &pacmanDown[2]);
     loadTexture("imgs/map/map.png", &backgroundTextureID);
     loadTexture("imgs/food/dot.png", &foodTextureID);
     loadTexture("imgs/ghosts/pinky.png", &ghostTextureID[0]);
     loadTexture("imgs/ghosts/clyde.png", &ghostTextureID[1]);
     loadTexture("imgs/food/Pellet_Medium.png", &powerupTexture);
     loadTexture("imgs/ghosts/inky.png", &ghostTextureID[2]);
+    loadTexture("imgs/ghosts/blinky.png", &ghostTextureID[3]);
     loadTexture("imgs/food/apple.png", &appleTexture);
     loadTexture("imgs/food/strawberry.png", &strawberryTexture);
+    loadTexture("imgs/ghosts/blue_ghost.png" , &ghostFrightened);
 }
 
 int main(int argc, char **argv)
@@ -915,11 +1135,12 @@ int main(int argc, char **argv)
 
     pthread_mutex_init(&lock, NULL);
 
-    printf("size = %d\n", coordsXYSize);
-    for (int i = 0; i < 2; i++)
+    for (int i = 0; i < 3; i++)
     {
         sem_init(&exit_permit[i], 0, 1);
     }
+    sem_init(&wrt, 0, 1);
+    sem_init(&mutex, 0, 1);
 
     createGrapha();
     printGraph(graph);
@@ -927,128 +1148,30 @@ int main(int argc, char **argv)
     int ghostNumber1 = 0;
     int ghostNumber2 = 1;
     int ghostNumber3 = 2;
+    int ghostNumber4 = 3;
 
-    pthread_t EngineThread, playerThread, Ghost1, Ghost2, Ghost3;
+    pthread_t EngineThread, playerThread, Ghost1, Ghost2, Ghost3, Ghost4;
     pthread_create(&EngineThread, NULL, gameEngineThread, NULL);
     pthread_create(&playerThread, NULL, userInterfaceThread, NULL);
     pthread_create(&Ghost1, NULL, ghostThread, (void *)&ghostNumber1);
     pthread_create(&Ghost2, NULL, ghostThread, (void *)&ghostNumber2);
     pthread_create(&Ghost3, NULL, ghostThread, (void *)&ghostNumber3);
-
+    pthread_create(&Ghost4, NULL, ghostThread, (void *)&ghostNumber4);
     glutMainLoop();
-
-    return 0;
 }
 
-void *gameEngineThread(void *arg)
+void *userInterfaceThread(void *arg)
 {
-    srand(time(NULL));
-    timer = rand() % (10000 - 1000 + 1) + 1000;
-    timer = 20;
-    checkFoodEatArr = malloc(foodXYSize * sizeof(bool));
-    checkPowerupEatArr = malloc(powerupXYsize * sizeof(bool));
+    glutSpecialFunc(keyboard);
     while (1)
     {
         animationtimer--;
         if (animationtimer <= 0)
         {
-            animationtimer = 20;
+            animationtimer = 30;
             currAnimation = (currAnimation + 1) % 3;
         }
-
-        float newX = x;
-        float newY = y;
-        if (delayFlag)
-        {
-            movePacman(triedKeyPressed);
-
-            delayTimer -= 1;
-            if (delayTimer < 0)
-            {
-                delayTimer = 0;
-                strcpy(triedKeyPressed, "");
-                delayFlag = false;
-            }
-        }
-
-        if (strcmp(keypressed, "down") == 0)
-        {
-            newY += 0.5;
-            if (isWallCollide(1, newX, newY) == false)
-            {
-                y += 0.5;
-            }
-        }
-        else if (strcmp(keypressed, "up") == 0)
-        {
-            newY -= 0.5;
-            if (isWallCollide(1, newX, newY) == false)
-            {
-                y -= 0.5;
-            }
-        }
-        else if (strcmp(keypressed, "left") == 0)
-        {
-            newX -= 0.5;
-            if (isWallCollide(0, newX, newY) == false)
-            {
-                x -= 0.5;
-            }
-        }
-        else if (strcmp(keypressed, "right") == 0)
-        {
-            newX += 0.5;
-            if (isWallCollide(0, newX, newY) == false)
-            {
-                x += 0.5;
-            }
-        }
-        if (timer < 0)
-        {
-            if (fruitCount < 3)
-            {
-                while (true)
-                {
-                    printf("--1\n");
-                    int randomvalue = rand() % 66;
-                    bool check = false;
-                    for (int i = 0; i < fruitCount; ++i)
-                    {
-                        if (xCoords[randomvalue] == fruitX[i] && yCoords[randomvalue] == fruitY[i])
-                        {
-                            check = true;
-                            break;
-                        }
-                    }
-                    if (check)
-                        continue;
-                    fruitX[fruitCount] = xCoords[randomvalue];
-                    fruitY[fruitCount] = yCoords[randomvalue];
-                    fruitCount++;
-                    break;
-                    printf("--2\n");
-                }
-            }
-            timer = rand() % (10000 - 1000 + 1) + 1000;
-        }
-        printf("%d\n" , timer);
-        // printPosition();
-        timer -= 1;
-        checkPowerupEat();
-        checkTeleport();
-        checkfoodEat();
-        glutPostRedisplay(); // Request redisplay
         usleep(5000);
-    }
-    return NULL;
-}
-
-void *userInterfaceThread(void *arg)
-{
-    // Initialize user interface
-    glutSpecialFunc(keyboard);
-    while (1)
-    {
     }
     return NULL;
 }
@@ -1079,11 +1202,26 @@ void *ghostThread(void *arg)
         }
         else
         {
+            // if (ifGhostyPacwomanCollision(i) == true)
+            // {
+            //     // printf("ghost ke saath collision\n");
+            //     // while (1)
+            //     // {
+            //     //     gameresetTimer++;
+            //     //     if (gameresetTimer >= 50)
+            //     //     {
+            //     //         gameReset();
+            //     //         break;
+            //     //     }
+            //     //     usleep(5000);
+            //     // }
+            // }
 
             if (ghostChase[i] == true)
             {
                 if (applyShortedPath == false)
                 {
+
                     int ghostVertex;
                     if (firstReached == false)
                     {
@@ -1094,9 +1232,23 @@ void *ghostThread(void *arg)
                         ghostVertex = secondVertex;
                     }
 
+                    sem_wait(&mutex); // Reader Writer problem Implemented
+                    readCount++;
+
+                    if (readCount == 1)
+                        sem_wait(&wrt);
+
                     int pacmanVertex = checkClosest(keypressed, x, y, "pacman");
 
-                    parent = dijkstra(graph, pacmanVertex, ghostVertex);
+                    readCount--;
+                    if (readCount == 0)
+                        sem_post(&wrt);
+
+                    sem_post(&mutex);
+                    if(!powerUp)
+                        parent = dijkstra(graph, pacmanVertex, ghostVertex);
+                    else
+                        parent = dijkstra2(graph, pacmanVertex, ghostVertex);
 
                     secondVertex = -1;
                     int j = 0;
@@ -1109,6 +1261,15 @@ void *ghostThread(void *arg)
                             secondVertex = current;
                         j++;
                         current = parent[current];
+                    }
+                    if (secondVertex == -1)
+                    {
+                        ghostChase[i] = false;
+                        firstReached = false;
+                        secondReached = false;
+                        firstVertex = -1;
+                        secondVertex = -1;
+                        continue;
                     }
 
                     if (firstReached == true)
@@ -1135,6 +1296,7 @@ void *ghostThread(void *arg)
                 }
                 if (secondReached == true)
                 {
+                    printf("Second Vertex Reached\n");
                     secondReached = false;
                     applyShortedPath = false;
                     printf("\n\n");
@@ -1203,6 +1365,7 @@ void *ghostThread(void *arg)
                 }
             }
             checkGhostLineOfSight(i);
+            
         }
 
         ghostTimer++;
@@ -1210,4 +1373,123 @@ void *ghostThread(void *arg)
         usleep(10000);
     }
     pthread_exit(NULL);
+}
+
+void *gameEngineThread(void *arg)
+{
+    srand(time(NULL));
+    timer = rand() % (10000 - 1000 + 1) + 1000;
+    timer = 20;
+    checkFoodEatArr = malloc(foodXYSize * sizeof(bool));
+    checkPowerupEatArr = malloc(powerupXYsize * sizeof(bool));
+    while (1)
+    {
+
+        float newX = x;
+        float newY = y;
+        if (delayFlag)
+        {
+            movePacman(triedKeyPressed);
+
+            delayTimer -= 1;
+            if (delayTimer < 0)
+            {
+                delayTimer = 0;
+                strcpy(triedKeyPressed, "");
+                delayFlag = false;
+            }
+        }
+        sem_wait(&wrt);
+        if (strcmp(keypressed, "down") == 0)
+        {
+            newY += 0.5;
+            if (isWallCollide(1, newX, newY) == false)
+            {
+                y += 0.5;
+            }
+        }
+        else if (strcmp(keypressed, "up") == 0)
+        {
+            newY -= 0.5;
+            if (isWallCollide(1, newX, newY) == false)
+            {
+                y -= 0.5;
+            }
+        }
+        else if (strcmp(keypressed, "left") == 0)
+        {
+            newX -= 0.5;
+            if (isWallCollide(0, newX, newY) == false)
+            {
+                x -= 0.5;
+            }
+        }
+        else if (strcmp(keypressed, "right") == 0)
+        {
+            newX += 0.5;
+            if (isWallCollide(0, newX, newY) == false)
+            {
+                x += 0.5;
+            }
+        }
+        sem_post(&wrt);
+        if (timer < 0)
+        {
+            if (fruitCount < 4)
+            {
+                while (true)
+                {
+                    printf("--1\n");
+                    int randomvalue = rand() % 66;
+                    bool check = false;
+                    for (int i = 0; i < 4; ++i)
+                    {
+                        if (xCoords[randomvalue] == fruitX[i] && yCoords[randomvalue] == fruitY[i])
+                        {
+                            check = true;
+                            break;
+                        }
+                    }
+                    if (check)
+                        continue;
+                    int index = 0;
+                    for (int k = 0; k < 4; ++k)
+                    {
+                        if (fruitX[k] == -1 && fruitY[k] == -1)
+                        {
+                            index = k;
+                            break;
+                        }
+                    }
+                    int type = rand() % 2;
+                    fruitX[index] = xCoords[randomvalue];
+                    fruitY[index] = yCoords[randomvalue];
+                    fruitType[index] = type;
+                    fruitCount++;
+                    break;
+                }
+            }
+            timer = rand() % (15000 - 3000 + 1) + 1000;
+        }
+        if (ghostChaseTimer > 0)
+        {
+            printf("%d\n", ghostChaseTimer);
+            ghostChaseTimer--;
+            if (ghostChaseTimer == 0)
+            {
+                ghostChaseTimer = -1;
+                ghostChase[0] = false;
+                ghostChase[1] = false;
+            }
+        }
+        timer -= 1;
+
+        checkFruitEatFunction();
+        checkPowerupEat();
+        checkTeleport();
+        checkfoodEat();
+        glutPostRedisplay(); // Request redisplay
+        usleep(5000);
+    }
+    return NULL;
 }
