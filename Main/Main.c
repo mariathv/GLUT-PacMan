@@ -1201,9 +1201,9 @@ int main(int argc, char **argv)
     pthread_create(&EngineThread, NULL, gameEngineThread, NULL);
     pthread_create(&playerThread, NULL, userInterfaceThread, NULL);
     pthread_create(&Ghost1, NULL, ghostThread, (void *)&ghostNumber1);
-    pthread_create(&Ghost2, NULL, ghostThread, (void *)&ghostNumber2);
-    pthread_create(&Ghost3, NULL, ghostThread, (void *)&ghostNumber3);
-    pthread_create(&Ghost4, NULL, ghostThread, (void *)&ghostNumber4);
+    // pthread_create(&Ghost2, NULL, ghostThread, (void *)&ghostNumber2);
+    // pthread_create(&Ghost3, NULL, ghostThread, (void *)&ghostNumber3);
+    // pthread_create(&Ghost4, NULL, ghostThread, (void *)&ghostNumber4);
     glutMainLoop();
 }
 
@@ -1303,7 +1303,7 @@ void *ghostThread(void *arg)
 
                     sem_post(&mutex);
                     if (!powerUp)
-                        parent = dijkstra(graph, pacmanVertex, ghostVertex);
+                    parent = dijkstra(graph, pacmanVertex, ghostVertex);
                     // else
                     //     parent = dijkstra_run_away(graph, pacmanVertex, ghostVertex);
 
