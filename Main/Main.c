@@ -896,6 +896,10 @@ void handleKeypress(unsigned char key, int x, int y)
     {
         pauseGame = true;
     }
+    if (key == 'o' || key == 'O')
+    {
+        pauseGame = false ;
+    }
 }
 
 void movePacman(const char *direction)
@@ -1522,6 +1526,8 @@ void *ghostThread(void *arg)
         if (pauseGame)
             continue;
 
+        
+
         float newX = ghostX[i];
         float newY = ghostY[i];
 
@@ -1774,9 +1780,10 @@ void *gameEngineThread(void *arg)
     {
         if (!gameStarted)
             continue;
-
         if (pauseGame)
             continue;
+        if(score == foodXYSize)
+            exit(0);
 
         if (currLife == 0)
         {
