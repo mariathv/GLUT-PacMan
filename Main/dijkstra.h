@@ -85,6 +85,15 @@ int minDistance(int dist[], bool sptSet[], int V)
     return min_index;
 }
 
+int maxDistance(int dist[], bool sptSet[], int V)
+{
+    int max = INT_MIN, max_index;
+    for (int v = 0; v < V; v++)
+        if (sptSet[v] == false && dist[v] >= max)
+            max = dist[v], max_index = v;
+    return max_index;
+}
+
 // Function to print the constructed distance array
 void printSolution(int dist[], int V, int start, int end)
 {
@@ -204,5 +213,44 @@ int* dijkstra2(struct Graph *graph, int start, int end)
         printf("No path from vertex %d to vertex %d\n", start, end);
     }
 
+    return parent;
+}
+
+int* dijkstra_run_away(struct Graph *graph, int start, int avoid)
+{
+    int V = graph->V;
+    int dist[V];
+    bool sptSet[V];
+    int *parent = malloc(V * sizeof(int));
+    
+    // Initialize distances and parent array
+    for (int i = 0; i < V; i++)
+    {
+        dist[i] = INT_MIN;  // Initialize to INT_MIN to find maximum distance
+        sptSet[i] = false;
+        parent[i] = -1;
+    }
+    
+    dist[start] = 0;
+    
+    // Find the shortest path tree
+    for (int count = 0; count < V - 1; count++)
+    {
+        int u = maxDistance(dist, sptSet, V);  // Modify minDistance to find maximum distance
+        sptSet[u] = true;
+        
+        struct AdjListNode *current = graph->array[u].head;
+        while (current != NULL)
+        {
+            int v = current->dest;
+            if (!sptSet[v] && dist[u] != INT_MIN && dist[u] + current->weight > dist[v])
+            {
+                dist[v] = dist[u] + current->weight;
+                parent[v] = u;
+            }
+            current = current->next;
+        }
+    }
+    
     return parent;
 }
