@@ -60,11 +60,19 @@ bool key[3] = {false, false, false};
 float foodside = 30.0f;
 float powerupSide = 24.0f;
 
+#define NUM_POWERUPS 4
 int arrPowerupx[] = {20, 555, 20, 555};
 int arrPowerupy[] = {90, 90, 662, 662};
 bool *checkPowerupEatArr;
 bool powerUp = false;
 int powerUpTimer = -1;
+int produceTime = -1;
+
+sem_t empty;
+sem_t full;
+pthread_mutex_t mutex1;
+int items = 0;
+int emptyValue = 0;
 
 int arrFoodx[] = {20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 220, 237, 253, 273, 296, 317, 340, 360, 380, 400, 420, 440, 460, 480, 500, 520, 539, 555, 20, 40, 60, 80, 103, 125, 447, 463, 489, 509, 523, 539, 555, 190, 210, 230, 253, 317, 340, 360, 380, 20, 40, 60, 80, 100, 125, 140, 160, 180, 200, 220, 238, 254, 319, 340, 360, 380, 400, 420, 440, 460, 480, 500, 520, 539, 555, 20, 40, 60, 80, 103, 125, 20, 40, 60, 80, 100, 125, 140, 160, 180, 200, 220, 240, 260, 280, 300, 320, 340, 360, 380, 400, 423, 447, 463, 480, 500, 520, 539, 555, 447, 463, 482, 501, 520, 539, 555, 0, 20, 40, 60, 80, 100, 125, 143, 165, 189, 315, 338, 360, 380, 400, 420, 447, 463, 480, 501, 520, 539, 555, 125, 142, 160, 180, 200, 220, 240, 320, 340, 360, 380, 403, 425, 447, 20, 40, 61, 20, 40, 60, 80, 100, 125, 140, 160, 177, 193, 210, 230, 252, 509, 531, 555, 189, 204, 221, 240, 260, 280, 300, 320, 340, 362, 384, 189, 204, 221, 240, 260, 280, 300, 320, 340, 362, 384, 384, 400, 420, 447, 463, 480, 500, 520, 540, 560, 320, 340, 360, 384, 189, 213, 235, 256, 20, 20, 61, 61, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 447, 447, 447, 447, 447, 447, 447, 447, 447, 447, 447, 447, 447, 447, 447, 447, 447, 447, 447, 20, 20, 254, 254, 254, 555, 555, 555, 555, 555, 319, 319, 319, 555, 555, 509, 509, 253, 253, 317, 317, 20, 20, 315, 315, 555, 555, 190, 190, 380, 380, 189, 189, 189, 189, 189, 189, 384, 384, 384, 384, 384, 384, 256, 256, 320, 320, 189, 189, 384, 384, 20, 20, 20, 252, 252};
 int arrFoody[] = {60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 531, 531, 531, 531, 531, 531, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 531, 531, 531, 531, 531, 531, 531, 395, 395, 395, 395, 395, 395, 395, 395, 395, 395, 262, 262, 262, 262, 262, 262, 262, 262, 262, 262, 262, 262, 262, 195, 195, 195, 195, 195, 195, 195, 195, 195, 195, 195, 195, 195, 195, 195, 195, 195, 262, 262, 262, 262, 262, 262, 262, 262, 262, 262, 262, 262, 262, 195, 195, 195, 466, 466, 466, 466, 466, 466, 466, 466, 466, 466, 466, 330, 330, 330, 330, 330, 330, 330, 330, 330, 330, 330, 395, 395, 395, 395, 395, 395, 395, 395, 395, 395, 531, 531, 531, 531, 531, 531, 531, 531, 85, 107, 150, 170, 150, 173, 215, 240, 290, 310, 330, 350, 370, 420, 440, 460, 480, 505, 550, 570, 620, 640, 660, 150, 173, 215, 240, 290, 310, 330, 350, 370, 420, 440, 460, 480, 505, 550, 570, 620, 640, 660, 550, 570, 620, 640, 660, 555, 575, 620, 640, 660, 620, 640, 660, 85, 105, 150, 170, 80, 100, 80, 100, 220, 240, 220, 240, 220, 240, 150, 170, 150, 170, 285, 305, 350, 370, 420, 440, 285, 305, 350, 370, 420, 440, 490, 510, 490, 510, 550, 570, 550, 570, 620, 640, 660, 220, 240};
@@ -106,8 +114,6 @@ pthread_mutex_t lock;
 bool delayFlag = false;
 
 int size;
-
-bool poweUpEaten = false;
 
 int timer;
 int fruitX[4] = {-1, -1, -1, -1};
@@ -259,8 +265,7 @@ void display()
     glEnd();
     glDisable(GL_TEXTURE_2D);
 
-
-    //Draw food Dot on the Map
+    // Draw food Dot on the Map
     for (int i = 0; i < foodXYSize; ++i)
     {
         if (checkFoodEatArr[i])
@@ -280,7 +285,7 @@ void display()
         glDisable(GL_TEXTURE_2D);
     }
 
-    //Draw Power up on the map
+    // Draw Power up on the map
     for (int i = 0; i < powerupXYsize; ++i)
     {
         if (checkPowerupEatArr[i] == true)
@@ -300,12 +305,12 @@ void display()
         glDisable(GL_TEXTURE_2D);
     }
 
-    //Draw Fruit on the map
+    // Draw Fruit on the map
     for (int i = 0; i < fruitCount; ++i)
     {
         if (fruitX[i] == -1 && fruitY[i] == -1)
             continue;
-        if(fruitType == 0)
+        if (fruitType == 0)
         {
             glEnable(GL_TEXTURE_2D);
             glBindTexture(GL_TEXTURE_2D, strawberryTexture);
@@ -363,7 +368,7 @@ void display()
 
     // Draw Ghost INKY
     glEnable(GL_TEXTURE_2D);
-    if(!powerUp)
+    if (!powerUp)
         glBindTexture(GL_TEXTURE_2D, ghostTextureID[2]);
     else
         glBindTexture(GL_TEXTURE_2D, ghostFrightened);
@@ -381,7 +386,7 @@ void display()
 
     // Draw Ghost PINKY
     glEnable(GL_TEXTURE_2D);
-    if(!powerUp)
+    if (!powerUp)
         glBindTexture(GL_TEXTURE_2D, ghostTextureID[0]);
     else
         glBindTexture(GL_TEXTURE_2D, ghostFrightened);
@@ -399,7 +404,7 @@ void display()
 
     // DRAW GHOST CLYDE
     glEnable(GL_TEXTURE_2D);
-    if(!powerUp)
+    if (!powerUp)
         glBindTexture(GL_TEXTURE_2D, ghostTextureID[1]);
     else
         glBindTexture(GL_TEXTURE_2D, ghostFrightened);
@@ -417,7 +422,7 @@ void display()
 
     // DRAW GHOST BLINKY
     glEnable(GL_TEXTURE_2D);
-    if(!powerUp)
+    if (!powerUp)
         glBindTexture(GL_TEXTURE_2D, ghostTextureID[3]);
     else
         glBindTexture(GL_TEXTURE_2D, ghostFrightened);
@@ -471,13 +476,19 @@ void checkPowerupEat()
     {
         if (arrPowerupx[i] == x && arrPowerupy[i] == y && checkPowerupEatArr[i] == false)
         {
-            poweUpEaten = true;
-            checkPowerupEatArr[i] = true;
-            powerUp = true;
-            powerUpTimer = 1500;
-            for(int i = 0 ; i < 4;  ++i)
-            {
-                ghostChase[i] = true;
+            if (sem_trywait(&full) == 0)
+            { // Non-blocking wait
+                pthread_mutex_lock(&mutex1);
+                checkPowerupEatArr[i] = true;
+                powerUp = true;
+                powerUpTimer = 1500;
+                produceTime = 300;
+                // for (int i = 0; i < 4; ++i)
+                // {
+                //     ghostChase[i] = true;
+                // }
+                pthread_mutex_unlock(&mutex1);
+                sem_post(&empty);
             }
         }
     }
@@ -493,9 +504,12 @@ void checkFruitEatFunction()
             fruitY[i] = -1;
             fruitType[i] = -1;
             fruitCount -= 1;
-            ghostChase[0] = true;
-            ghostChase[1] = true;
-            ghostChaseTimer = 1500;
+            if (powerUp == false)
+            {
+                ghostChase[0] = true;
+                ghostChase[1] = true;
+                ghostChaseTimer = 1500;
+            }
         }
     }
 }
@@ -638,7 +652,7 @@ void keyboard(int key)
         }
         break;
     }
-    printPosition();
+    // printPosition();
 }
 
 void movePacman(const char *direction)
@@ -866,16 +880,33 @@ void checkGhostCoords(int ghostNum)
     }
 }
 
-bool ifGhostyPacwomanCollision(int ghostNum)
+bool ifGhostyPacwomanCollision(int i)
 {
-    for (int i = -20; i < 20; i++)
+
+    if (ghostY[i] == y && (x < ghostX[i] + 20 && x > ghostX[i] - 20))
     {
-        for (int j = -20; j < 20; j++)
-            if (ghostX[ghostNum] == x + i && ghostY[ghostNum] == y + j)
-            {
-                printf("collision ho rahi\n");
-                return true;
-            }
+        if (powerUp == true)
+        {
+            ghostX[i] = 285;
+            ghostY[i] = 395;
+            inHouse[i] = true;
+            strcpy(ghostMovement[i], "down");
+            return false;
+        }
+        return true;
+    }
+
+    if (ghostX[i] == x && (y < ghostY[i] + 20 && y > ghostY[i] - 20))
+    {
+        if (powerUp == true)
+        {
+            ghostX[i] = 285;
+            ghostY[i] = 395;
+            inHouse[i] = true;
+            strcpy(ghostMovement[i], "down");
+            return false;
+        }
+        return true;
     }
 
     return false;
@@ -989,8 +1020,11 @@ void checkGhostLineOfSight(int i) // function to check if pacman come in line of
         if (yup == y && ghostX[i] == x && up == false)
         {
             strcpy(ghostMovement[i], "up");
-            if(powerUp)
+            if (powerUp)
+            {
+
                 strcpy(ghostMovement[i], "down");
+            }
             return;
         }
 
@@ -1001,8 +1035,11 @@ void checkGhostLineOfSight(int i) // function to check if pacman come in line of
         if (ydown == y && ghostX[i] == x && down == false)
         {
             strcpy(ghostMovement[i], "down");
-            if(powerUp)
+            if (powerUp)
+            {
+
                 strcpy(ghostMovement[i], "up");
+            }
             return;
         }
 
@@ -1016,8 +1053,11 @@ void checkGhostLineOfSight(int i) // function to check if pacman come in line of
         if (ghostY[i] == y && xleft == x && left == false)
         {
             strcpy(ghostMovement[i], "left");
-            if(powerUp)
+            if (powerUp)
+            {
+
                 strcpy(ghostMovement[i], "right");
+            }
             return;
         }
 
@@ -1028,8 +1068,10 @@ void checkGhostLineOfSight(int i) // function to check if pacman come in line of
         if (ghostY[i] == y && xright == x && right == false)
         {
             strcpy(ghostMovement[i], "right");
-            if(powerUp)
+            if (powerUp)
+            {
                 strcpy(ghostMovement[i], "left");
+            }
             return;
         }
 
@@ -1040,10 +1082,34 @@ void checkGhostLineOfSight(int i) // function to check if pacman come in line of
 
 void gameReset()
 {
+    ghostX[0] = 285;
+    ghostX[1] = 245;
+    ghostX[2] = 330;
+    ghostX[3] = 285;
+
+    ghostY[0] = 405;
+    ghostY[1] = 395;
+    ghostY[2] = 395;
+    ghostY[3] = 395;
+
+    for (int i = 0; i < numGhost; i++)
+        strcpy(ghostMovement[i], "down");
+
+    ghostTimer = 0;
+
     for (int i = 0; i < 4; i++)
     {
         inHouse[i] = true;
     }
+
+    for (int i = 0; i < 3; i++)
+    {
+        exit_perm[i] = false;
+        key[i] = false;
+    }
+    x = 280.0f;
+    y = 195.0f;
+
     for (int i = 0; i < 3; ++i)
     {
         if (sem_destroy(&exit_permit[i]) != 0)
@@ -1062,29 +1128,6 @@ void gameReset()
             return;
         }
     }
-
-    ghostX[0] = 285;
-    ghostX[1] = 245;
-    ghostX[2] = 330;
-    ghostX[3] = 285;
-
-    ghostY[0] = 405;
-    ghostY[1] = 395;
-    ghostY[2] = 395;
-    ghostY[3] = 395;
-
-    for (int i = 0; i < numGhost; i++)
-        strcpy(ghostMovement[i], "down");
-    ghostTimer = 0;
-
-    ghostTimer = 0;
-    for (int i = 0; i < 3; i++)
-    {
-        exit_perm[i] = false;
-        key[i] = false;
-    }
-    x = 280.0f;
-    y = 195.0f;
 }
 
 void initOpenGL()
@@ -1116,9 +1159,9 @@ void initOpenGL()
     loadTexture("imgs/food/Pellet_Medium.png", &powerupTexture);
     loadTexture("imgs/ghosts/inky.png", &ghostTextureID[2]);
     loadTexture("imgs/ghosts/blinky.png", &ghostTextureID[3]);
-    loadTexture("imgs/food/apple.png", &appleTexture);
+    loadTexture("imgs/food/cherry.png", &appleTexture);
     loadTexture("imgs/food/strawberry.png", &strawberryTexture);
-    loadTexture("imgs/ghosts/blue_ghost.png" , &ghostFrightened);
+    loadTexture("imgs/ghosts/blue_ghost.png", &ghostFrightened);
 }
 
 int main(int argc, char **argv)
@@ -1141,6 +1184,10 @@ int main(int argc, char **argv)
     }
     sem_init(&wrt, 0, 1);
     sem_init(&mutex, 0, 1);
+
+    pthread_mutex_init(&mutex1, NULL);
+    sem_init(&empty, 0, 4); // Initialize empty semaphore with maximum items
+    sem_init(&full, 0, 1);  // Initialize full semaphore with 0 items
 
     createGrapha();
     printGraph(graph);
@@ -1192,7 +1239,6 @@ void *ghostThread(void *arg)
     strcpy(ghostMovement[0], "down");
     while (1)
     {
-
         float newX = ghostX[i];
         float newY = ghostY[i];
 
@@ -1202,20 +1248,27 @@ void *ghostThread(void *arg)
         }
         else
         {
-            // if (ifGhostyPacwomanCollision(i) == true)
-            // {
-            //     // printf("ghost ke saath collision\n");
-            //     // while (1)
-            //     // {
-            //     //     gameresetTimer++;
-            //     //     if (gameresetTimer >= 50)
-            //     //     {
-            //     //         gameReset();
-            //     //         break;
-            //     //     }
-            //     //     usleep(5000);
-            //     // }
-            // }
+            sem_wait(&mutex); // Reader Writer problem Implemented
+            readCount++;
+
+            if (readCount == 1)
+                sem_wait(&wrt);
+
+            sem_post(&mutex);
+            bool collision = ifGhostyPacwomanCollision(i);
+            sem_wait(&mutex);
+
+            readCount--;
+            if (readCount == 0)
+                sem_post(&wrt);
+
+            sem_post(&mutex);
+
+            if (collision)
+            {
+                gameReset();
+                continue;
+            }
 
             if (ghostChase[i] == true)
             {
@@ -1238,17 +1291,21 @@ void *ghostThread(void *arg)
                     if (readCount == 1)
                         sem_wait(&wrt);
 
+                    sem_post(&mutex);
+
                     int pacmanVertex = checkClosest(keypressed, x, y, "pacman");
+
+                    sem_wait(&mutex);
 
                     readCount--;
                     if (readCount == 0)
                         sem_post(&wrt);
 
                     sem_post(&mutex);
-                    if(!powerUp)
+                    if (!powerUp)
                         parent = dijkstra(graph, pacmanVertex, ghostVertex);
-                    else
-                        parent = dijkstra2(graph, pacmanVertex, ghostVertex);
+                    // else
+                    //     parent = dijkstra_run_away(graph, pacmanVertex, ghostVertex);
 
                     secondVertex = -1;
                     int j = 0;
@@ -1365,7 +1422,6 @@ void *ghostThread(void *arg)
                 }
             }
             checkGhostLineOfSight(i);
-            
         }
 
         ghostTimer++;
@@ -1382,6 +1438,8 @@ void *gameEngineThread(void *arg)
     timer = 20;
     checkFoodEatArr = malloc(foodXYSize * sizeof(bool));
     checkPowerupEatArr = malloc(powerupXYsize * sizeof(bool));
+    for (int i = 0; i < 4; ++i)
+        checkPowerupEatArr[i] = true;
     while (1)
     {
 
@@ -1433,7 +1491,7 @@ void *gameEngineThread(void *arg)
             }
         }
         sem_post(&wrt);
-        if (timer < 0)
+        if (timer < 0) // Random timer to spawn fruit in the maze
         {
             if (fruitCount < 4)
             {
@@ -1471,9 +1529,8 @@ void *gameEngineThread(void *arg)
             }
             timer = rand() % (15000 - 3000 + 1) + 1000;
         }
-        if (ghostChaseTimer > 0)
+        if (ghostChaseTimer > 0) // ghost case timer when fruit Eat
         {
-            printf("%d\n", ghostChaseTimer);
             ghostChaseTimer--;
             if (ghostChaseTimer == 0)
             {
@@ -1482,7 +1539,46 @@ void *gameEngineThread(void *arg)
                 ghostChase[1] = false;
             }
         }
+        if (powerUpTimer > 0) // Power up timer when pallet Eat
+        {
+            powerUpTimer -= 1;
+            if (powerUpTimer == 0)
+            {
+                sem_post(&full);
+                powerUp = false;
+                powerUpTimer = -1;
+                for (int i = 0; i < 4; ++i)
+                {
+                    ghostChase[i] = false;
+                }
+            }
+        }
         timer -= 1;
+
+        if (sem_trywait(&empty) == 0)
+        { // Non-blocking wait
+            pthread_mutex_lock(&mutex1);
+
+            if (produceTime > 0)
+            {
+                produceTime -= 1;
+                sem_post(&empty);
+            }
+            else
+            {
+                produceTime = -1;
+                for (int i = 0; i < 4; ++i)
+                {
+                    if (checkPowerupEatArr[i] == true)
+                    {
+                        items++;
+                        checkPowerupEatArr[i] = false;
+                        break;
+                    }
+                }
+            }
+            pthread_mutex_unlock(&mutex1);
+        }
 
         checkFruitEatFunction();
         checkPowerupEat();
