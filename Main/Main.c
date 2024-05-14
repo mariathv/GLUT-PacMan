@@ -27,6 +27,7 @@ GLuint pacmanDown[3];
 GLuint pacmanUp[3];
 GLuint backgroundTextureID;
 GLuint foodTextureID;
+GLuint menuBackgroundTextureID;
 
 GLuint powerupTexture;
 GLuint ghostTextureID[4];
@@ -125,7 +126,19 @@ sem_t ghostyPanwomanCollisionSemaphore;
 sem_t mutex, wrt;
 int readCount;
 
+bool gameStarted = false;
+int menuindex = 0;
+int optionYcoords[2] = {410, 550};
+
+void renderMenu()
+{
+}
+
 bool isWallCollide(bool moveAxis, float xx, float yy);
+
+void menu()
+{
+}
 
 void createGrapha()
 {
@@ -239,6 +252,65 @@ void loadTexture(const char *filename, GLuint *textureID)
 }
 
 // Function to display the scene
+void displayMenu()
+{
+    glClear(GL_COLOR_BUFFER_BIT);
+    glLoadIdentity();
+
+    int pacx = 120;
+    // draw menu
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, menuBackgroundTextureID);
+
+    // Draw textured quad covering the menu window
+    glBegin(GL_QUADS);
+    glTexCoord2f(0.0f, 1.0f); // Flip the y-coordinate
+    glVertex2f(0.0f, 0.0f);
+    glTexCoord2f(1.0f, 1.0f);
+    glVertex2f(600.0f, 0.0f);
+    glTexCoord2f(1.0f, 0.0f); // Flip the y-coordinate
+    glVertex2f(600.0f, 800.0f);
+    glTexCoord2f(0.0f, 0.0f);
+    glVertex2f(0.0f, 800.0f);
+    glEnd();
+    glDisable(GL_TEXTURE_2D);
+    // Disable texture mapping
+    if (menuindex == 0)
+    {
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, pacmanLeft[0]);
+        glBegin(GL_QUADS);
+        glTexCoord2f(1, 1);
+        glVertex2f(pacx, 410);
+        glTexCoord2f(0, 1);
+        glVertex2f(pacx + 40, 410);
+        glTexCoord2f(0, 0);
+        glVertex2f(pacx + 40, 410 + (40 * 1.0f)); // Adjusted the height of the quad
+        glTexCoord2f(1, 0);
+        glVertex2f(pacx, 410 + (40 * 1.0f)); // Adjusted the height of the quad
+        glEnd();
+        glDisable(GL_TEXTURE_2D);
+    }
+    else
+    {
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, pacmanLeft[0]);
+        glBegin(GL_QUADS);
+        glTexCoord2f(1, 1);
+        glVertex2f(pacx, 490);
+        glTexCoord2f(0, 1);
+        glVertex2f(pacx + 40, 490);
+        glTexCoord2f(0, 0);
+        glVertex2f(pacx + 40, 490 + (40 * 1.0f)); // Adjusted the height of the quad
+        glTexCoord2f(1, 0);
+        glVertex2f(pacx, 490 + (40 * 1.0f)); // Adjusted the height of the quad
+        glEnd();
+        glDisable(GL_TEXTURE_2D);
+    }
+
+    glutSwapBuffers();
+    glutPostRedisplay();
+}
 void display()
 {
     glClear(GL_COLOR_BUFFER_BIT);
@@ -259,8 +331,7 @@ void display()
     glEnd();
     glDisable(GL_TEXTURE_2D);
 
-
-    //Draw food Dot on the Map
+    // Draw food Dot on the Map
     for (int i = 0; i < foodXYSize; ++i)
     {
         if (checkFoodEatArr[i])
@@ -280,7 +351,7 @@ void display()
         glDisable(GL_TEXTURE_2D);
     }
 
-    //Draw Power up on the map
+    // Draw Power up on the map
     for (int i = 0; i < powerupXYsize; ++i)
     {
         if (checkPowerupEatArr[i] == true)
@@ -300,12 +371,12 @@ void display()
         glDisable(GL_TEXTURE_2D);
     }
 
-    //Draw Fruit on the map
+    // Draw Fruit on the map
     for (int i = 0; i < fruitCount; ++i)
     {
         if (fruitX[i] == -1 && fruitY[i] == -1)
             continue;
-        if(fruitType == 0)
+        if (fruitType == 0)
         {
             glEnable(GL_TEXTURE_2D);
             glBindTexture(GL_TEXTURE_2D, strawberryTexture);
@@ -363,7 +434,7 @@ void display()
 
     // Draw Ghost INKY
     glEnable(GL_TEXTURE_2D);
-    if(!powerUp)
+    if (!powerUp)
         glBindTexture(GL_TEXTURE_2D, ghostTextureID[2]);
     else
         glBindTexture(GL_TEXTURE_2D, ghostFrightened);
@@ -381,7 +452,7 @@ void display()
 
     // Draw Ghost PINKY
     glEnable(GL_TEXTURE_2D);
-    if(!powerUp)
+    if (!powerUp)
         glBindTexture(GL_TEXTURE_2D, ghostTextureID[0]);
     else
         glBindTexture(GL_TEXTURE_2D, ghostFrightened);
@@ -399,7 +470,7 @@ void display()
 
     // DRAW GHOST CLYDE
     glEnable(GL_TEXTURE_2D);
-    if(!powerUp)
+    if (!powerUp)
         glBindTexture(GL_TEXTURE_2D, ghostTextureID[1]);
     else
         glBindTexture(GL_TEXTURE_2D, ghostFrightened);
@@ -417,7 +488,7 @@ void display()
 
     // DRAW GHOST BLINKY
     glEnable(GL_TEXTURE_2D);
-    if(!powerUp)
+    if (!powerUp)
         glBindTexture(GL_TEXTURE_2D, ghostTextureID[3]);
     else
         glBindTexture(GL_TEXTURE_2D, ghostFrightened);
@@ -475,7 +546,7 @@ void checkPowerupEat()
             checkPowerupEatArr[i] = true;
             powerUp = true;
             powerUpTimer = 1500;
-            for(int i = 0 ; i < 4;  ++i)
+            for (int i = 0; i < 4; ++i)
             {
                 ghostChase[i] = true;
             }
@@ -582,63 +653,98 @@ void keyboard(int key)
 {
     float newX = x;
     float newY = y;
-    switch (key)
+    if (!gameStarted)
     {
-    case GLUT_KEY_RIGHT:
-        newX += 0.5;
-        if (isWallCollide(0, newX, newY) == false)
+        switch (key)
         {
-            // pacmanTexturePath = "imgs/pacman/right.png";
-            strcpy(keypressed, "right");
+        case GLUT_KEY_RIGHT:
+            if (menuindex == 0)
+            {
+                glutDisplayFunc(display);
+                gameStarted = true;
+            }
+            else if (menuindex == 1)
+            {
+                exit(0);
+            }
+            break;
+        case GLUT_KEY_UP:
+            if (menuindex - 1 == 0)
+            {
+                menuindex = 0;
+                printf("index : %d \n", menuindex);
+            }
+            break;
+
+        case GLUT_KEY_DOWN:
+            if (menuindex + 1 == 1)
+            {
+                menuindex = 1;
+                printf("index : %d \n", menuindex);
+            }
+            break;
         }
-        else
-        {
-            strcpy(triedKeyPressed, "right");
-            delayFlag = true;
-            delayTimer = 100;
-        }
-        break;
-    case GLUT_KEY_LEFT:
-        newX -= 0.5;
-        if (isWallCollide(0, newX, newY) == false)
-        {
-            strcpy(keypressed, "left");
-        }
-        else
-        {
-            strcpy(triedKeyPressed, "left");
-            delayFlag = true;
-            delayTimer = 100;
-        }
-        break;
-    case GLUT_KEY_UP:
-        newY -= 0.5;
-        if (isWallCollide(1, newX, newY) == false)
-        {
-            strcpy(keypressed, "up");
-        }
-        else
-        {
-            strcpy(triedKeyPressed, "up");
-            delayFlag = true;
-            delayTimer = 100;
-        }
-        break;
-    case GLUT_KEY_DOWN:
-        newY += 0.5;
-        if (isWallCollide(1, newX, newY) == false)
-        {
-            strcpy(keypressed, "down");
-        }
-        else
-        {
-            strcpy(triedKeyPressed, "down");
-            delayFlag = true;
-            delayTimer = 100;
-        }
-        break;
     }
-    printPosition();
+    else
+    {
+        switch (key)
+        {
+        case GLUT_KEY_RIGHT:
+            newX += 0.5;
+            if (isWallCollide(0, newX, newY) == false)
+            {
+                // pacmanTexturePath = "imgs/pacman/right.png";
+                strcpy(keypressed, "right");
+            }
+            else
+            {
+                strcpy(triedKeyPressed, "right");
+                delayFlag = true;
+                delayTimer = 100;
+            }
+            break;
+        case GLUT_KEY_LEFT:
+            newX -= 0.5;
+            if (isWallCollide(0, newX, newY) == false)
+            {
+                strcpy(keypressed, "left");
+            }
+            else
+            {
+                strcpy(triedKeyPressed, "left");
+                delayFlag = true;
+                delayTimer = 100;
+            }
+            break;
+        case GLUT_KEY_UP:
+            newY -= 0.5;
+            if (isWallCollide(1, newX, newY) == false)
+            {
+                strcpy(keypressed, "up");
+            }
+            else
+            {
+                strcpy(triedKeyPressed, "up");
+                delayFlag = true;
+                delayTimer = 100;
+            }
+            break;
+        case GLUT_KEY_DOWN:
+            newY += 0.5;
+            if (isWallCollide(1, newX, newY) == false)
+            {
+                strcpy(keypressed, "down");
+            }
+            else
+            {
+                strcpy(triedKeyPressed, "down");
+                delayFlag = true;
+                delayTimer = 100;
+            }
+            break;
+        }
+        // printPosition();
+    }
 }
 
 void movePacman(const char *direction)
@@ -753,8 +859,8 @@ void findDirectionPath(int vertex, int i)
     float x = ghostX[i];
     float y = ghostY[i];
 
-    printf("Second Vertex Coords %d    %d\n", xCoords[vertex], yCoords[vertex]);
-    printf("Ghost Coords         %f    %f\n", ghostX[i], ghostY[i]);
+    // printf("Second Vertex Coords %d    %d\n", xCoords[vertex], yCoords[vertex]);
+    // printf("Ghost Coords         %f    %f\n", ghostX[i], ghostY[i]);
 
     if (x == xCoords[vertex])
     {
@@ -769,20 +875,20 @@ void findDirectionPath(int vertex, int i)
             if (y == yCoords[vertex])
             {
                 strcpy(ghostMovement[i], "down");
-                printf("Suggest  down\n");
+                // printf("Suggest  down\n");
                 return;
             }
             if (yy == yCoords[vertex])
             {
                 strcpy(ghostMovement[i], "up");
-                printf("Suggest  up\n");
+                // printf("Suggest  up\n");
                 return;
             }
         }
     }
     else
     {
-        printf("Y are Equal\n");
+        // printf("Y are Equal\n");
         float xx = x;
         while (1)
         {
@@ -792,13 +898,13 @@ void findDirectionPath(int vertex, int i)
             if (x == xCoords[vertex])
             {
                 strcpy(ghostMovement[i], "left");
-                printf("Suggest  left\n");
+                // printf("Suggest  left\n");
                 return;
             }
             if (xx == xCoords[vertex])
             {
                 strcpy(ghostMovement[i], "right");
-                printf("Suggest  right\n");
+                // printf("Suggest  right\n");
                 return;
             }
         }
@@ -866,21 +972,22 @@ void checkGhostCoords(int ghostNum)
     }
 }
 
-bool ifGhostyPacwomanCollision(int ghostNum)
+bool ifGhostyPacwomanCollision(int i)
 {
-    for (int i = -20; i < 20; i++)
+    if (ghostY[i] == y && (x < ghostX[i] + 20 && x > ghostX[i] - 20))
     {
-        for (int j = -20; j < 20; j++)
-            if (ghostX[ghostNum] == x + i && ghostY[ghostNum] == y + j)
-            {
-                printf("collision ho rahi\n");
-                return true;
-            }
+        return true;
+    }
+
+    if (ghostX[i] == x && (y < ghostY[i] + 20 && y > ghostY[i] - 20))
+    {
+        return true;
     }
 
     return false;
 }
 
+int currPermit = -1;
 void keyPermitCheck(int i)
 {
     float newX = ghostX[i];
@@ -905,10 +1012,10 @@ void keyPermitCheck(int i)
         {
             sem_wait(&exit_permit[left]);
             sem_wait(&exit_permit[right]);
-            // printf("ghost %d got permit\n", i + 1);
             exit_perm[i - 1] = true;
         }
 
+        // strcpy(ghostMovement[i], "down");
         if (ghostX[i] == 285) // 285 = the x position of Enterance
             ghostY[i]++;
         else
@@ -925,7 +1032,7 @@ void keyPermitCheck(int i)
         {
             if (i != 0)
             {
-
+                printf("ghost %d releasing permit\n", i + 1);
                 sem_post(&exit_permit[left]);
                 sem_post(&exit_permit[right]);
             }
@@ -989,7 +1096,7 @@ void checkGhostLineOfSight(int i) // function to check if pacman come in line of
         if (yup == y && ghostX[i] == x && up == false)
         {
             strcpy(ghostMovement[i], "up");
-            if(powerUp)
+            if (powerUp)
                 strcpy(ghostMovement[i], "down");
             return;
         }
@@ -1001,7 +1108,7 @@ void checkGhostLineOfSight(int i) // function to check if pacman come in line of
         if (ydown == y && ghostX[i] == x && down == false)
         {
             strcpy(ghostMovement[i], "down");
-            if(powerUp)
+            if (powerUp)
                 strcpy(ghostMovement[i], "up");
             return;
         }
@@ -1016,7 +1123,7 @@ void checkGhostLineOfSight(int i) // function to check if pacman come in line of
         if (ghostY[i] == y && xleft == x && left == false)
         {
             strcpy(ghostMovement[i], "left");
-            if(powerUp)
+            if (powerUp)
                 strcpy(ghostMovement[i], "right");
             return;
         }
@@ -1028,7 +1135,7 @@ void checkGhostLineOfSight(int i) // function to check if pacman come in line of
         if (ghostY[i] == y && xright == x && right == false)
         {
             strcpy(ghostMovement[i], "right");
-            if(powerUp)
+            if (powerUp)
                 strcpy(ghostMovement[i], "left");
             return;
         }
@@ -1040,28 +1147,18 @@ void checkGhostLineOfSight(int i) // function to check if pacman come in line of
 
 void gameReset()
 {
-    for (int i = 0; i < 4; i++)
-    {
-        inHouse[i] = true;
-    }
-    for (int i = 0; i < 3; ++i)
-    {
-        if (sem_destroy(&exit_permit[i]) != 0)
-        {
-            perror("Semaphore destruction failed");
-            return;
-        }
-    }
+
+    // for (int i = 0; i < 3; ++i)
+    // {
+    //     if (inHouse == true)
+    //         if (sem_destroy(&exit_permit[i]) != 0)
+    //         {
+    //             perror("Semaphore destruction failed");
+    //             return;
+    //         }
+    // }
 
     // Reinitialize the semaphores
-    for (int i = 0; i < 3; ++i)
-    {
-        if (sem_init(&exit_permit[i], 0, 1) != 0)
-        {
-            perror("Semaphore reinitialization failed");
-            return;
-        }
-    }
 
     ghostX[0] = 285;
     ghostX[1] = 245;
@@ -1077,14 +1174,42 @@ void gameReset()
         strcpy(ghostMovement[i], "down");
     ghostTimer = 0;
 
-    ghostTimer = 0;
+    x = 280.0f;
+    y = 195.0f;
+
+    // for (int i = 0; i < 3; ++i)
+    // {
+    //     if (i == currPermit)
+    //         if (sem_init(&exit_permit[i], 0, 1) != 0)
+    //         {
+    //             perror("Semaphore reinitialization failed");
+    //             return;
+    //         }
+    //         else
+    //         {
+    //             printf("reinitialized %d\n", i + 1);
+    //         }
+    // }
+    for (int i = 0; i < 3; i++)
+    {
+        sem_init(&exit_permit[i], 0, 1);
+    }
+    for (int i = 1; i < 4; i++)
+    {
+        if (i == currPermit)
+        {
+            int left = i - 1;
+            int right = (i) % 3;
+            sem_post(&exit_permit[left]);
+            sem_post(&exit_permit[right]);
+            printf("resetting ; releasing permit held by %d\n", i + 1);
+        }
+    }
     for (int i = 0; i < 3; i++)
     {
         exit_perm[i] = false;
         key[i] = false;
     }
-    x = 280.0f;
-    y = 195.0f;
 }
 
 void initOpenGL()
@@ -1118,7 +1243,8 @@ void initOpenGL()
     loadTexture("imgs/ghosts/blinky.png", &ghostTextureID[3]);
     loadTexture("imgs/food/apple.png", &appleTexture);
     loadTexture("imgs/food/strawberry.png", &strawberryTexture);
-    loadTexture("imgs/ghosts/blue_ghost.png" , &ghostFrightened);
+    loadTexture("imgs/ghosts/blue_ghost.png", &ghostFrightened);
+    loadTexture("imgs/menu/menu.png", &menuBackgroundTextureID);
 }
 
 int main(int argc, char **argv)
@@ -1131,7 +1257,9 @@ int main(int argc, char **argv)
     glutCreateWindow("Pacman Game");
     initOpenGL();
 
-    glutDisplayFunc(display);
+    // glutDisplayFunc(display);
+
+    glutDisplayFunc(displayMenu);
 
     pthread_mutex_init(&lock, NULL);
 
@@ -1163,8 +1291,16 @@ int main(int argc, char **argv)
 void *userInterfaceThread(void *arg)
 {
     glutSpecialFunc(keyboard);
+
+    glutDisplayFunc(displayMenu);
+
     while (1)
     {
+        if (!gameStarted)
+        {
+
+            continue;
+        }
         animationtimer--;
         if (animationtimer <= 0)
         {
@@ -1179,7 +1315,7 @@ void *userInterfaceThread(void *arg)
 void *ghostThread(void *arg)
 {
     int i = *(int *)arg;
-    printf("i : %d\n", i);
+    // printf("i : %d\n", i);
     int firstVertex = -1;
     int secondVertex = -1;
     bool secondReached = false;
@@ -1192,30 +1328,39 @@ void *ghostThread(void *arg)
     strcpy(ghostMovement[0], "down");
     while (1)
     {
-
+        if (!gameStarted)
+            continue;
         float newX = ghostX[i];
         float newY = ghostY[i];
 
         if (inHouse[i] == true)
         {
+            ghostTimer++;
             keyPermitCheck(i);
         }
         else
         {
-            // if (ifGhostyPacwomanCollision(i) == true)
-            // {
-            //     // printf("ghost ke saath collision\n");
-            //     // while (1)
-            //     // {
-            //     //     gameresetTimer++;
-            //     //     if (gameresetTimer >= 50)
-            //     //     {
-            //     //         gameReset();
-            //     //         break;
-            //     //     }
-            //     //     usleep(5000);
-            //     // }
-            // }
+            sem_wait(&mutex); // Reader Writer problem Implemented
+            readCount++;
+
+            if (readCount == 1)
+                sem_wait(&wrt);
+
+            sem_post(&mutex);
+            bool collision = ifGhostyPacwomanCollision(i);
+            sem_wait(&mutex);
+
+            readCount--;
+            if (readCount == 0)
+                sem_post(&wrt);
+
+            sem_post(&mutex);
+
+            if (collision)
+            {
+                gameReset();
+                continue;
+            }
 
             if (ghostChase[i] == true)
             {
@@ -1245,7 +1390,7 @@ void *ghostThread(void *arg)
                         sem_post(&wrt);
 
                     sem_post(&mutex);
-                    if(!powerUp)
+                    if (!powerUp)
                         parent = dijkstra(graph, pacmanVertex, ghostVertex);
                     else
                         parent = dijkstra2(graph, pacmanVertex, ghostVertex);
@@ -1365,10 +1510,8 @@ void *ghostThread(void *arg)
                 }
             }
             checkGhostLineOfSight(i);
-            
         }
 
-        ghostTimer++;
         glutPostRedisplay(); // Request redisplay
         usleep(10000);
     }
@@ -1384,7 +1527,8 @@ void *gameEngineThread(void *arg)
     checkPowerupEatArr = malloc(powerupXYsize * sizeof(bool));
     while (1)
     {
-
+        if (!gameStarted)
+            continue;
         float newX = x;
         float newY = y;
         if (delayFlag)
@@ -1473,7 +1617,7 @@ void *gameEngineThread(void *arg)
         }
         if (ghostChaseTimer > 0)
         {
-            printf("%d\n", ghostChaseTimer);
+            // printf("%d\n", ghostChaseTimer);
             ghostChaseTimer--;
             if (ghostChaseTimer == 0)
             {
