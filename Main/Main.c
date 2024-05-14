@@ -1,6 +1,9 @@
 #include <GL/gl.h>
 #include <GL/glx.h>
+#include <AL/al.h>
+#include <AL/alc.h>
 
+#include <sndfile.h>
 #include <GL/glut.h>
 #include <SOIL/SOIL.h>
 
@@ -14,10 +17,14 @@
 #include <time.h>
 #include <semaphore.h>
 #include "dijkstra.h"
+
+ALuint source;
 // #include "utility.h"
 
 int currAnimation = 0;
+int currDieAnimation = 0;
 int animationtimer = 10;
+int dieAnimationtimer = 10;
 bool isWallCollision = false;
 
 bool stoppac;
@@ -30,6 +37,7 @@ GLuint foodTextureID;
 GLuint menuBackgroundTextureID;
 GLuint scoreTexture;
 GLuint SpeedIngredientTexture; // for ghost only
+GLuint pacmanDieTexture[11];
 
 GLuint powerupTexture;
 GLuint ghostTextureID[4];
@@ -116,6 +124,7 @@ void *gameEngineThread(void *arg);
 void *userInterfaceThread(void *arg);
 void *ghostThread(void *arg);
 
+bool pacmanStop = false;
 char triedKeyPressed[10];
 int delayTimer = 0;
 char keypressed[10] = "up";
@@ -150,6 +159,11 @@ int menuindex = 0;
 int optionYcoords[2] = {410, 550};
 
 int currPermit = -1;
+
+sem_t boostSem;
+
+ALuint buffer;
+
 void createGrapha()
 {
     size = 66;
@@ -454,45 +468,44 @@ void display()
     }
 
     // Draw Pacman
-    glEnable(GL_TEXTURE_2D);
-    if (strcmp(keypressed, "left") == 0)
-        glBindTexture(GL_TEXTURE_2D, pacmanLeft[currAnimation]);
-    else if (strcmp(keypressed, "up") == 0)
-        glBindTexture(GL_TEXTURE_2D, pacmanDown[currAnimation]);
-    else if (strcmp(keypressed, "down") == 0)
-        glBindTexture(GL_TEXTURE_2D, pacmanUp[currAnimation]);
-    else
-        glBindTexture(GL_TEXTURE_2D, pacmanRight[currAnimation]);
-    glBegin(GL_QUADS);
-    glTexCoord2f(0, 0);
-    glVertex2f(x, y);
-    glTexCoord2f(1, 0);
-    glVertex2f(x + side, y);
-    glTexCoord2f(1, 1);
-    glVertex2f(x + side, y + (side * 1.0f)); // Adjusted the height of the quad
-    glTexCoord2f(0, 1);
-    glVertex2f(x, y + (side * 1.0f)); // Adjusted the height of the quad
-    glEnd();
-    glDisable(GL_TEXTURE_2D);
-
-    for (int i = 0; i < 2; i++)
+    if (pacmanStop == false)
     {
-        if (speedBoost[i] == true)
-        {
-            glEnable(GL_TEXTURE_2D);
-            glBindTexture(GL_TEXTURE_2D, SpeedIngredientTexture);
-            glBegin(GL_QUADS);
-            glTexCoord2f(1, 1);
-            glVertex2f(speedX[i], speedY[i]);
-            glTexCoord2f(0, 1);
-            glVertex2f(speedX[i] + side, speedY[i]);
-            glTexCoord2f(0, 0);
-            glVertex2f(speedX[i] + side, speedY[i] + (side * 1.0f)); // Adjusted the height of the quad
-            glTexCoord2f(1, 0);
-            glVertex2f(speedX[i], speedY[i] + (side * 1.0f)); // Adjusted the height of the quad
-            glEnd();
-            glDisable(GL_TEXTURE_2D);
-        }
+        glEnable(GL_TEXTURE_2D);
+        if (strcmp(keypressed, "left") == 0)
+            glBindTexture(GL_TEXTURE_2D, pacmanLeft[currAnimation]);
+        else if (strcmp(keypressed, "up") == 0)
+            glBindTexture(GL_TEXTURE_2D, pacmanDown[currAnimation]);
+        else if (strcmp(keypressed, "down") == 0)
+            glBindTexture(GL_TEXTURE_2D, pacmanUp[currAnimation]);
+        else
+            glBindTexture(GL_TEXTURE_2D, pacmanRight[currAnimation]);
+        glBegin(GL_QUADS);
+        glTexCoord2f(0, 0);
+        glVertex2f(x, y);
+        glTexCoord2f(1, 0);
+        glVertex2f(x + side, y);
+        glTexCoord2f(1, 1);
+        glVertex2f(x + side, y + (side * 1.0f)); // Adjusted the height of the quad
+        glTexCoord2f(0, 1);
+        glVertex2f(x, y + (side * 1.0f)); // Adjusted the height of the quad
+        glEnd();
+        glDisable(GL_TEXTURE_2D);
+    }
+    else
+    {
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, pacmanDieTexture[currDieAnimation]);
+        glBegin(GL_QUADS);
+        glTexCoord2f(0, 0);
+        glVertex2f(x, y);
+        glTexCoord2f(1, 0);
+        glVertex2f(x + side, y);
+        glTexCoord2f(1, 1);
+        glVertex2f(x + side, y + (side * 1.0f)); // Adjusted the height of the quad
+        glTexCoord2f(0, 1);
+        glVertex2f(x, y + (side * 1.0f)); // Adjusted the height of the quad
+        glEnd();
+        glDisable(GL_TEXTURE_2D);
     }
 
     // Draw Ghost INKY
@@ -590,6 +603,56 @@ void display()
     glutSwapBuffers();
 }
 
+ALuint loadSound(const char *filename)
+{
+    SF_INFO sfinfo;
+    SNDFILE *sndfile = sf_open(filename, SFM_READ, &sfinfo);
+    if (!sndfile)
+    {
+        fprintf(stderr, "Failed to open sound file: %s\n", filename);
+        exit(EXIT_FAILURE);
+    }
+
+    short *membuf = malloc(sfinfo.frames * sfinfo.channels * sizeof(short));
+    sf_readf_short(sndfile, membuf, sfinfo.frames);
+
+    ALenum format;
+    if (sfinfo.channels == 1)
+    {
+        format = AL_FORMAT_MONO16;
+    }
+    else if (sfinfo.channels == 2)
+    {
+        format = AL_FORMAT_STEREO16;
+    }
+    else
+    {
+        sf_close(sndfile);
+        free(membuf);
+        fprintf(stderr, "Unsupported audio format\n");
+        exit(EXIT_FAILURE);
+    }
+
+    ALuint buffer;
+    alGenBuffers(1, &buffer);
+    alBufferData(buffer, format, membuf, sfinfo.frames * sfinfo.channels * sizeof(short), sfinfo.samplerate);
+
+    sf_close(sndfile);
+    free(membuf);
+
+    return buffer;
+}
+
+void cleanup()
+{
+    alDeleteSources(1, &source);
+    ALCcontext *context = alcGetCurrentContext();
+    ALCdevice *device = alcGetContextsDevice(context);
+    alcMakeContextCurrent(NULL);
+    alcDestroyContext(context);
+    alcCloseDevice(device);
+}
+
 void printPosition()
 {
     printf("position: (%.2f, %.2f)\n", x, y);
@@ -618,7 +681,7 @@ void checkfoodEat()
         }
     }
 }
-
+int isLooping = 1;
 void checkPowerupEat()
 {
     for (int i = 0; i < powerupXYsize; ++i)
@@ -629,6 +692,16 @@ void checkPowerupEat()
             { // Non-blocking wait
                 pthread_mutex_lock(&mutex1);
                 checkPowerupEatArr[i] = true;
+                alSourceStop(source);
+                alSourcei(source, AL_LOOPING, AL_FALSE);
+                isLooping = 0;
+
+                ALuint bufferr = loadSound("sounds/pacman_intermission.wav");
+                alGenSources(1, &source);
+                alSourcei(source, AL_BUFFER, bufferr);
+                alSourcei(source, AL_LOOPING, AL_TRUE);
+
+                alSourcePlay(source);
                 powerUp = true;
                 powerUpTimer = 1500;
                 produceTime = 300;
@@ -643,43 +716,42 @@ void checkPowerupEat()
     }
 }
 
-void checkSpeedBoostEat()
+bool isGhostFast(i)
 {
-    for (int i = 0; i < 2; ++i)
-    {
-        if (speedBoost[i] == false)
-        {
-            speedTimer[i]--;
-            if (speedTimer[i] <= 0)
-            {
-                printf("resetting speed of ghost %d\n", i);
-                ghostCurrentSpeed[currentSpeedGhost[i]] = 10000;
-                // speedBoost[i] = true;
-                speedTimer[i] = 2000;
-            }
-            continue;
-        }
-        for (int j = 0; j < 4; j++)
-        {
-
-            if (speedX[i] == ghostX[j] && speedY[i] == ghostY[j] && speedBoost[i] == true)
-            {
-                printf("ghost %d speed change\n", i);
-                ghostCurrentSpeed[j] = 8000;
-                speedBoost[i] = false;
-                currentSpeedGhost[i] = j;
-            }
-
-            if (speedX[i] == ghostX[j] && speedY[i] == ghostY[j] && speedBoost[i] == true)
-            {
-                printf("ghost %d speed change\n", i);
-                ghostCurrentSpeed[j] = 8000;
-                speedBoost[i] = false;
-                currentSpeedGhost[i] = j;
-            }
-        }
-    }
+    if (ghostCurrentSpeed[i] == 10000)
+        return false;
+    else
+        return true;
 }
+
+// void checkSpeedBoostEat()
+// {
+//     for (int i = 0; i < 2; ++i)
+//     {
+//         if (speedBoost[i] == false)
+//         {
+//             speedTimer[i]--;
+//             if (speedTimer[i] <= 0)
+//             {
+//                 printf("resetting speed of ghost %d\n", i);
+//                 ghostCurrentSpeed[currentSpeedGhost[i]] = 10000;
+//                 // speedBoost[i] = true;
+//                 speedTimer[i] = 2000;
+//             }
+//             continue;
+//         }
+//         for (int j = 0; j < 4; j++)
+//         {
+//             if (speedX[i] == ghostX[j] && speedY[i] == ghostY[j] && speedBoost[i] == true)
+//             {
+//                 printf("ghost %d speed change\n", i);
+//                 ghostCurrentSpeed[j] = 8000;
+//                 speedBoost[i] = false;
+//                 currentSpeedGhost[i] = j;
+//             }
+//         }
+//     }
+// }
 
 void checkFruitEatFunction()
 {
@@ -791,6 +863,18 @@ void keyboard(int key)
             if (menuindex == 0)
             {
                 glutDisplayFunc(display);
+                alGenSources(1, &source);
+                alSourcei(source, AL_BUFFER, buffer);
+                alSourcePlay(source);
+
+                ALuint buffer = loadSound("sounds/pacman_chomp.wav");
+                alGenSources(1, &source);
+                alSourcei(source, AL_BUFFER, buffer);
+
+                // Enable looping
+                alSourcei(source, AL_LOOPING, AL_TRUE);
+
+                alSourcePlay(source);
                 gameStarted = true;
             }
             else if (menuindex == 1)
@@ -823,11 +907,13 @@ void keyboard(int key)
             newX += 0.5;
             if (isWallCollide(0, newX, newY) == false)
             {
-                // pacmanTexturePath = "imgs/pacman/right.png";
+                // alSourcePlay(source);
+                //  pacmanTexturePath = "imgs/pacman/right.png";
                 strcpy(keypressed, "right");
             }
             else
             {
+                alSourcePause(source);
                 strcpy(triedKeyPressed, "right");
                 delayFlag = true;
                 delayTimer = 100;
@@ -1104,6 +1190,8 @@ void checkGhostCoords(int ghostNum)
 
 bool ifGhostyPacwomanCollision(int i)
 {
+    if (pacmanStop == true)
+        return;
 
     if (ghostY[i] == y && (x < ghostX[i] + 20 && x > ghostX[i] - 20))
     {
@@ -1115,6 +1203,19 @@ bool ifGhostyPacwomanCollision(int i)
             strcpy(ghostMovement[i], "down");
             return false;
         }
+        // printf("here");
+        currAnimation = 0;
+        alGenSources(1, &source);
+        alSourcei(source, AL_BUFFER, buffer);
+        alSourcePlay(source);
+
+        ALuint buffer = loadSound("sounds/pacman_death.wav");
+        alGenSources(1, &source);
+        alSourcei(source, AL_BUFFER, buffer);
+
+        alSourcePlay(source);
+
+        pacmanStop = true;
         currLife--;
         return true;
     }
@@ -1129,6 +1230,18 @@ bool ifGhostyPacwomanCollision(int i)
             strcpy(ghostMovement[i], "down");
             return false;
         }
+        // printf("here");
+        currAnimation = 0;
+        alGenSources(1, &source);
+        alSourcei(source, AL_BUFFER, buffer);
+        alSourcePlay(source);
+
+        ALuint buffer = loadSound("sounds/pacman_death.wav");
+        alGenSources(1, &source);
+        alSourcei(source, AL_BUFFER, buffer);
+
+        alSourcePlay(source);
+        pacmanStop = true;
         currLife--;
         return true;
     }
@@ -1331,8 +1444,8 @@ void gameReset()
         exit_perm[i] = false;
         key[i] = false;
     }
-    x = 280.0f;
-    y = 195.0f;
+    // x = 280.0f;
+    // y = 195.0f;
 
     for (int i = 0; i < 3; ++i)
     {
@@ -1394,6 +1507,19 @@ void initOpenGL()
     loadTexture("imgs/others/score.png", &scoreTexture);
     loadTexture("imgs/pacman/left1.png", &lifeTexture);
     loadTexture("imgs/food/speedBoost.png", &SpeedIngredientTexture);
+
+    // die animation
+    loadTexture("imgs/pacman/die/1.png", &pacmanDieTexture[0]);
+    loadTexture("imgs/pacman/die/2.png", &pacmanDieTexture[1]);
+    loadTexture("imgs/pacman/die/3.png", &pacmanDieTexture[2]);
+    loadTexture("imgs/pacman/die/4.png", &pacmanDieTexture[3]);
+    loadTexture("imgs/pacman/die/5.png", &pacmanDieTexture[4]);
+    loadTexture("imgs/pacman/die/6.png", &pacmanDieTexture[5]);
+    loadTexture("imgs/pacman/die/7.png", &pacmanDieTexture[6]);
+    loadTexture("imgs/pacman/die/8.png", &pacmanDieTexture[7]);
+    loadTexture("imgs/pacman/die/9.png", &pacmanDieTexture[8]);
+    loadTexture("imgs/pacman/die/10.png", &pacmanDieTexture[9]);
+    loadTexture("imgs/pacman/die/11.png", &pacmanDieTexture[10]);
 }
 
 int main(int argc, char **argv)
@@ -1406,6 +1532,23 @@ int main(int argc, char **argv)
     glutCreateWindow("Pacman Game");
     initOpenGL();
 
+    atexit(cleanup);
+
+    ALCdevice *device = alcOpenDevice(NULL);
+    if (!device)
+    {
+        fprintf(stderr, "Failed to open audio device\n");
+        return -1;
+    }
+
+    ALCcontext *context = alcCreateContext(device, NULL);
+    if (!alcMakeContextCurrent(context))
+    {
+        fprintf(stderr, "Failed to set audio context\n");
+        return -1;
+    }
+    buffer = loadSound("sounds/pacman_beginning.wav");
+
     glutDisplayFunc(displayMenu);
 
     pthread_mutex_init(&lock, NULL);
@@ -1416,6 +1559,9 @@ int main(int argc, char **argv)
     }
     sem_init(&wrt, 0, 1);
     sem_init(&mutex, 0, 1);
+
+    // semaphore for sleeping barber problem (scenario #4)
+    sem_init(&boostSem, 0, 2);
 
     pthread_mutex_init(&mutex1, NULL);
     sem_init(&empty, 0, 4); // Initialize empty semaphore with maximum items
@@ -1454,25 +1600,46 @@ void *userInterfaceThread(void *arg)
             continue;
         }
 
-        checkSpeedBoostEat();
-
-        animationtimer--;
-        if (animationtimer <= 0)
+        // checkSpeedBoostEat();
+        if (pacmanStop == true)
         {
-            animationtimer = 30;
-            currAnimation = (currAnimation + 1) % 3;
+            dieAnimationtimer--;
+
+            printf("dieTimer: %d , currAnimation : %d\n", dieAnimationtimer, currDieAnimation);
+            if (dieAnimationtimer <= 0)
+            {
+                dieAnimationtimer = 10;
+                currDieAnimation++;
+                if (currDieAnimation >= 11)
+                {
+
+                    currDieAnimation = 0;
+                    ALuint buffer = loadSound("sounds/pacman_chomp.wav");
+                    alGenSources(1, &source);
+                    alSourcei(source, AL_BUFFER, buffer);
+
+                    // Enable looping
+                    alSourcei(source, AL_LOOPING, AL_TRUE);
+
+                    alSourcePlay(source);
+                    pacmanStop = false;
+                    x = 280.0f;
+                    y = 195.0f;
+                }
+            }
         }
-        usleep(5000);
+        else
+        {
+            animationtimer--;
+            if (animationtimer <= 0)
+            {
+                animationtimer = 30;
+                currAnimation = (currAnimation + 1) % 3;
+            }
+        }
+        usleep(10000);
     }
     return NULL;
-}
-
-bool isGhostFast(i)
-{
-    if (ghostCurrentSpeed[i] == 10000)
-        return false;
-    else
-        return true;
 }
 
 void *ghostThread(void *arg)
@@ -1510,6 +1677,7 @@ void *ghostThread(void *arg)
                 sem_wait(&wrt);
 
             sem_post(&mutex);
+
             bool collision = ifGhostyPacwomanCollision(i);
             sem_wait(&mutex);
 
@@ -1521,6 +1689,7 @@ void *ghostThread(void *arg)
 
             if (collision)
             {
+
                 gameReset();
                 continue;
             }
@@ -1699,6 +1868,10 @@ void *gameEngineThread(void *arg)
         if (!gameStarted)
             continue;
 
+        if (pacmanStop == true)
+        {
+            continue;
+        }
         if (currLife == 0)
         {
             exit(0);
@@ -1805,6 +1978,15 @@ void *gameEngineThread(void *arg)
             powerUpTimer -= 1;
             if (powerUpTimer == 0)
             {
+                alSourceStop(source);
+                alSourcei(source, AL_LOOPING, AL_FALSE);
+                isLooping = 0;
+
+                ALuint buffer = loadSound("sounds/pacman_chomp.wav");
+                alGenSources(1, &source);
+                alSourcei(source, AL_BUFFER, buffer);
+                alSourcei(source, AL_LOOPING, AL_TRUE);
+                alSourcePlay(source);
                 sem_post(&full);
                 powerUp = false;
                 powerUpTimer = -1;
