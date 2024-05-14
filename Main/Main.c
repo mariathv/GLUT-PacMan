@@ -29,16 +29,28 @@ GLuint backgroundTextureID;
 GLuint foodTextureID;
 GLuint menuBackgroundTextureID;
 GLuint scoreTexture;
+GLuint SpeedIngredientTexture; // for ghost only
 
 GLuint powerupTexture;
 GLuint ghostTextureID[4];
 GLuint strawberryTexture;
 GLuint appleTexture;
 GLuint ghostFrightened;
+GLuint lifeTexture;
+
+int ghostCurrentSpeed[4] = {10000, 10000, 10000, 10000};
+bool speedBoost[2] = {true, true};
+int speedX[2] = {20, 555};
+int speedY[2] = {531, 262};
+int speedTimer[2] = {2000, 2000, 2000, 2000};
+int currentSpeedGhost[2] = {-1, -1};
 
 float x = 280.0f;
 float y = 195.0f;
 float side = 30.0f;
+
+int currLife = 3;
+int LifexPos[3] = {10, 40, 70};
 
 float ghostX[4] = {285, 245, 330, 285};
 float ghostY[4] = {405, 395, 395, 395}; //(285,395)
@@ -249,7 +261,6 @@ void loadTexture(const char *filename, GLuint *textureID)
 }
 
 void displayMenu()
-
 {
     glClear(GL_COLOR_BUFFER_BIT);
     glLoadIdentity();
@@ -319,6 +330,7 @@ void renderBitmapString(float x, float y, void *font, const char *string)
         string++;
     }
 }
+
 void display()
 {
     glClear(GL_COLOR_BUFFER_BIT);
@@ -463,6 +475,26 @@ void display()
     glEnd();
     glDisable(GL_TEXTURE_2D);
 
+    for (int i = 0; i < 2; i++)
+    {
+        if (speedBoost[i] == true)
+        {
+            glEnable(GL_TEXTURE_2D);
+            glBindTexture(GL_TEXTURE_2D, SpeedIngredientTexture);
+            glBegin(GL_QUADS);
+            glTexCoord2f(1, 1);
+            glVertex2f(speedX[i], speedY[i]);
+            glTexCoord2f(0, 1);
+            glVertex2f(speedX[i] + side, speedY[i]);
+            glTexCoord2f(0, 0);
+            glVertex2f(speedX[i] + side, speedY[i] + (side * 1.0f)); // Adjusted the height of the quad
+            glTexCoord2f(1, 0);
+            glVertex2f(speedX[i], speedY[i] + (side * 1.0f)); // Adjusted the height of the quad
+            glEnd();
+            glDisable(GL_TEXTURE_2D);
+        }
+    }
+
     // Draw Ghost INKY
     glEnable(GL_TEXTURE_2D);
     if (!powerUp)
@@ -535,6 +567,26 @@ void display()
     glEnd();
     glDisable(GL_TEXTURE_2D);
 
+    // DRAW LIVES
+    for (int i = 0; i < currLife; i++)
+    {
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, lifeTexture);
+        glBegin(GL_QUADS);
+        glTexCoord2f(1, 1);
+        glVertex2f(LifexPos[i], 750);
+        glTexCoord2f(0, 1);
+        glVertex2f(LifexPos[i] + side, 750);
+        glTexCoord2f(0, 0);
+        glVertex2f(LifexPos[i] + side, 750 + (side * 1.0f)); // Adjusted the height of the quad
+        glTexCoord2f(1, 0);
+        glVertex2f(LifexPos[i], 750 + (side * 1.0f)); // Adjusted the height of the quad
+        glEnd();
+        glDisable(GL_TEXTURE_2D);
+    }
+
+    // SpeedBoost
+
     glutSwapBuffers();
 }
 
@@ -586,6 +638,44 @@ void checkPowerupEat()
                 // }
                 pthread_mutex_unlock(&mutex1);
                 sem_post(&empty);
+            }
+        }
+    }
+}
+
+void checkSpeedBoostEat()
+{
+    for (int i = 0; i < 2; ++i)
+    {
+        if (speedBoost[i] == false)
+        {
+            speedTimer[i]--;
+            if (speedTimer[i] <= 0)
+            {
+                printf("resetting speed of ghost %d\n", i);
+                ghostCurrentSpeed[currentSpeedGhost[i]] = 10000;
+                // speedBoost[i] = true;
+                speedTimer[i] = 2000;
+            }
+            continue;
+        }
+        for (int j = 0; j < 4; j++)
+        {
+
+            if (speedX[i] == ghostX[j] && speedY[i] == ghostY[j] && speedBoost[i] == true)
+            {
+                printf("ghost %d speed change\n", i);
+                ghostCurrentSpeed[j] = 8000;
+                speedBoost[i] = false;
+                currentSpeedGhost[i] = j;
+            }
+
+            if (speedX[i] == ghostX[j] && speedY[i] == ghostY[j] && speedBoost[i] == true)
+            {
+                printf("ghost %d speed change\n", i);
+                ghostCurrentSpeed[j] = 8000;
+                speedBoost[i] = false;
+                currentSpeedGhost[i] = j;
             }
         }
     }
@@ -1025,6 +1115,7 @@ bool ifGhostyPacwomanCollision(int i)
             strcpy(ghostMovement[i], "down");
             return false;
         }
+        currLife--;
         return true;
     }
 
@@ -1038,6 +1129,7 @@ bool ifGhostyPacwomanCollision(int i)
             strcpy(ghostMovement[i], "down");
             return false;
         }
+        currLife--;
         return true;
     }
 
@@ -1300,6 +1392,8 @@ void initOpenGL()
     loadTexture("imgs/ghosts/blue_ghost.png", &ghostFrightened);
     loadTexture("imgs/menu/menu.png", &menuBackgroundTextureID);
     loadTexture("imgs/others/score.png", &scoreTexture);
+    loadTexture("imgs/pacman/left1.png", &lifeTexture);
+    loadTexture("imgs/food/speedBoost.png", &SpeedIngredientTexture);
 }
 
 int main(int argc, char **argv)
@@ -1311,8 +1405,6 @@ int main(int argc, char **argv)
     glutInitWindowPosition(100, 100);
     glutCreateWindow("Pacman Game");
     initOpenGL();
-
-    // glutDisplayFunc(display);
 
     glutDisplayFunc(displayMenu);
 
@@ -1355,11 +1447,15 @@ void *userInterfaceThread(void *arg)
 
     while (1)
     {
+
         if (!gameStarted)
         {
 
             continue;
         }
+
+        checkSpeedBoostEat();
+
         animationtimer--;
         if (animationtimer <= 0)
         {
@@ -1369,6 +1465,14 @@ void *userInterfaceThread(void *arg)
         usleep(5000);
     }
     return NULL;
+}
+
+bool isGhostFast(i)
+{
+    if (ghostCurrentSpeed[i] == 10000)
+        return false;
+    else
+        return true;
 }
 
 void *ghostThread(void *arg)
@@ -1576,7 +1680,7 @@ void *ghostThread(void *arg)
         }
 
         glutPostRedisplay(); // Request redisplay
-        usleep(10000);
+        usleep(ghostCurrentSpeed[i]);
     }
     pthread_exit(NULL);
 }
@@ -1594,6 +1698,11 @@ void *gameEngineThread(void *arg)
     {
         if (!gameStarted)
             continue;
+
+        if (currLife == 0)
+        {
+            exit(0);
+        }
         float newX = x;
         float newY = y;
         if (delayFlag)
