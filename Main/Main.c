@@ -29,16 +29,28 @@ GLuint backgroundTextureID;
 GLuint foodTextureID;
 GLuint menuBackgroundTextureID;
 GLuint scoreTexture;
+GLuint SpeedIngredientTexture; // for ghost only
 
 GLuint powerupTexture;
 GLuint ghostTextureID[4];
 GLuint strawberryTexture;
 GLuint appleTexture;
 GLuint ghostFrightened;
+GLuint lifeTexture;
+
+int ghostCurrentSpeed[4] = {10000, 10000, 10000, 10000};
+bool speedBoost[2] = {true, true};
+int speedX[2] = {20, 555};
+int speedY[2] = {531, 262};
+int speedTimer[4] = {2000, 2000, 2000, 2000};
+int currentSpeedGhost[2] = {-1, -1};
 
 float x = 280.0f;
 float y = 195.0f;
 float side = 30.0f;
+
+int currLife = 3;
+int LifexPos[3] = {10, 40, 70};
 
 float ghostX[4] = {285, 245, 330, 285};
 float ghostY[4] = {465, 395, 395, 395}; //(285,395)
@@ -79,7 +91,7 @@ int emptyValue = 0;
 int arrFoodx[] = {20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 220, 237, 253, 273, 296, 317, 340, 360, 380, 400, 420, 440, 460, 480, 500, 520, 539, 555, 20, 40, 60, 80, 103, 125, 447, 463, 489, 509, 523, 539, 555, 190, 210, 230, 253, 317, 340, 360, 380, 20, 40, 60, 80, 100, 125, 140, 160, 180, 200, 220, 238, 254, 319, 340, 360, 380, 400, 420, 440, 460, 480, 500, 520, 539, 555, 20, 40, 60, 80, 103, 125, 20, 40, 60, 80, 100, 125, 140, 160, 180, 200, 220, 240, 260, 280, 300, 320, 340, 360, 380, 400, 423, 447, 463, 480, 500, 520, 539, 555, 447, 463, 482, 501, 520, 539, 555, 0, 20, 40, 60, 80, 100, 125, 143, 165, 189, 315, 338, 360, 380, 400, 420, 447, 463, 480, 501, 520, 539, 555, 125, 142, 160, 180, 200, 220, 240, 320, 340, 360, 380, 403, 425, 447, 20, 40, 61, 20, 40, 60, 80, 100, 125, 140, 160, 177, 193, 210, 230, 252, 509, 531, 555, 189, 204, 221, 240, 260, 280, 300, 320, 340, 362, 384, 189, 204, 221, 240, 260, 280, 300, 320, 340, 362, 384, 384, 400, 420, 447, 463, 480, 500, 520, 540, 560, 320, 340, 360, 384, 189, 213, 235, 256, 20, 20, 61, 61, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 125, 447, 447, 447, 447, 447, 447, 447, 447, 447, 447, 447, 447, 447, 447, 447, 447, 447, 447, 447, 20, 20, 254, 254, 254, 555, 555, 555, 555, 555, 319, 319, 319, 555, 555, 509, 509, 253, 253, 317, 317, 20, 20, 315, 315, 555, 555, 190, 190, 380, 380, 189, 189, 189, 189, 189, 189, 384, 384, 384, 384, 384, 384, 256, 256, 320, 320, 189, 189, 384, 384, 20, 20, 20, 252, 252};
 int arrFoody[] = {60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 685, 531, 531, 531, 531, 531, 531, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 596, 531, 531, 531, 531, 531, 531, 531, 395, 395, 395, 395, 395, 395, 395, 395, 395, 395, 262, 262, 262, 262, 262, 262, 262, 262, 262, 262, 262, 262, 262, 195, 195, 195, 195, 195, 195, 195, 195, 195, 195, 195, 195, 195, 195, 195, 195, 195, 262, 262, 262, 262, 262, 262, 262, 262, 262, 262, 262, 262, 262, 195, 195, 195, 466, 466, 466, 466, 466, 466, 466, 466, 466, 466, 466, 330, 330, 330, 330, 330, 330, 330, 330, 330, 330, 330, 395, 395, 395, 395, 395, 395, 395, 395, 395, 395, 531, 531, 531, 531, 531, 531, 531, 531, 85, 107, 150, 170, 150, 173, 215, 240, 290, 310, 330, 350, 370, 420, 440, 460, 480, 505, 550, 570, 620, 640, 660, 150, 173, 215, 240, 290, 310, 330, 350, 370, 420, 440, 460, 480, 505, 550, 570, 620, 640, 660, 550, 570, 620, 640, 660, 555, 575, 620, 640, 660, 620, 640, 660, 85, 105, 150, 170, 80, 100, 80, 100, 220, 240, 220, 240, 220, 240, 150, 170, 150, 170, 285, 305, 350, 370, 420, 440, 285, 305, 350, 370, 420, 440, 490, 510, 490, 510, 550, 570, 550, 570, 620, 640, 660, 220, 240};
 
-              // 0   1    2    3    4     5    6    7    8    9    10    11    12    13   14   15   16   17   18   19   20   21   22   23   24    25    26    27   28    29  30   31   32   33    34   35   36   37  38   39  40    41   42   43   44   45  46   47  48   49  50  51  52  53  54  55  56   57  58  59  60  61  62  63  64   65
+// 0   1    2    3    4     5    6    7    8    9    10    11    12    13   14   15   16   17   18   19   20   21   22   23   24    25    26    27   28    29  30   31   32   33    34   35   36   37  38   39  40    41   42   43   44   45  46   47  48   49  50  51  52  53  54  55  56   57  58  59  60  61  62  63  64   65
 int xCoords[] = {20, 20, 125, 61, 20, 20, 190, 253, 253, 317, 317, 380, 380, 315, 315, 447, 447, 509, 509, 555, 555, 555, 555, 252, 252, 190, 125, 189, 189, 384, 384, 315, 189, 189, 384, 320, 256, 256, 189, 189, 254, 254, 125, 20, 20, 20, 125, 319, 319, 384, 320, 447, 555, 555, 555, 447, 384, 384, 61, 125, 447, 447, 125, 125, 447, 384};
 int yCoords[] = {60, 128, 128, 195, 195, 262, 128, 128, 60, 128, 60, 128, 195, 195, 262, 195, 128, 195, 128, 128, 60, 195, 262, 195, 262, 195, 195, 262, 330, 330, 262, 262, 395, 466, 466, 466, 466, 531, 531, 596, 685, 596, 685, 696, 531, 596, 531, 685, 596, 531, 531, 685, 685, 596, 531, 531, 596, 395, 128, 262, 262, 395, 395, 596, 596, 395};
 
@@ -138,6 +150,13 @@ int menuindex = 0;
 int optionYcoords[2] = {410, 550};
 
 bool pauseGame = false;
+
+sem_t seats;
+sem_t customer;
+int havingSeat[2] = {-1, -1};
+int waitingSeat[2] = {-1, -1};
+int timerSpeedBoost[2] = {-1, -1};
+int sitting = 0;
 
 int currPermit = -1;
 void createGrapha()
@@ -384,6 +403,7 @@ void display()
     }
 
     // Draw Power up on the map
+    // Draw Power up on the map
     for (int i = 0; i < powerupXYsize; ++i)
     {
         if (checkPowerupEatArr[i] == true)
@@ -464,6 +484,26 @@ void display()
     glEnd();
     glDisable(GL_TEXTURE_2D);
 
+    for (int i = 0; i < 2; i++)
+    {
+        if (speedBoost[i] == true)
+        {
+            glEnable(GL_TEXTURE_2D);
+            glBindTexture(GL_TEXTURE_2D, SpeedIngredientTexture);
+            glBegin(GL_QUADS);
+            glTexCoord2f(1, 1);
+            glVertex2f(speedX[i], speedY[i]);
+            glTexCoord2f(0, 1);
+            glVertex2f(speedX[i] + side, speedY[i]);
+            glTexCoord2f(0, 0);
+            glVertex2f(speedX[i] + side, speedY[i] + (side * 1.0f)); // Adjusted the height of the quad
+            glTexCoord2f(1, 0);
+            glVertex2f(speedX[i], speedY[i] + (side * 1.0f)); // Adjusted the height of the quad
+            glEnd();
+            glDisable(GL_TEXTURE_2D);
+        }
+    }
+
     // Draw Ghost INKY
     glEnable(GL_TEXTURE_2D);
     if (!powerUp)
@@ -536,6 +576,26 @@ void display()
     glEnd();
     glDisable(GL_TEXTURE_2D);
 
+    // DRAW LIVES
+    for (int i = 0; i < currLife; i++)
+    {
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, lifeTexture);
+        glBegin(GL_QUADS);
+        glTexCoord2f(1, 1);
+        glVertex2f(LifexPos[i], 750);
+        glTexCoord2f(0, 1);
+        glVertex2f(LifexPos[i] + side, 750);
+        glTexCoord2f(0, 0);
+        glVertex2f(LifexPos[i] + side, 750 + (side * 1.0f)); // Adjusted the height of the quad
+        glTexCoord2f(1, 0);
+        glVertex2f(LifexPos[i], 750 + (side * 1.0f)); // Adjusted the height of the quad
+        glEnd();
+        glDisable(GL_TEXTURE_2D);
+    }
+
+    // SpeedBoost
+
     glutSwapBuffers();
 }
 
@@ -585,8 +645,50 @@ void checkPowerupEat()
                 {
                     ghostChase[i] = true;
                 }
+                for (int i = 0; i < ghostCurrentSpeed[i]; ++i)
+                {
+                    ghostCurrentSpeed[i] = 12000;
+                }
                 pthread_mutex_unlock(&mutex1);
                 sem_post(&empty);
+            }
+        }
+    }
+}
+
+void checkSpeedBoostEat()
+{
+    for (int i = 0; i < 2; ++i)
+    {
+        if (speedBoost[i] == false)
+        {
+            speedTimer[i]--;
+            if (speedTimer[i] <= 0)
+            {
+                printf("resetting speed of ghost %d\n", i);
+                ghostCurrentSpeed[currentSpeedGhost[i]] = 10000;
+                // speedBoost[i] = true;
+                speedTimer[i] = 2000;
+            }
+            continue;
+        }
+        for (int j = 0; j < 4; j++)
+        {
+
+            if (speedX[i] == ghostX[j] && speedY[i] == ghostY[j] && speedBoost[i] == true)
+            {
+                printf("ghost %d speed change\n", i);
+                ghostCurrentSpeed[j] = 8000;
+                speedBoost[i] = false;
+                currentSpeedGhost[i] = j;
+            }
+
+            if (speedX[i] == ghostX[j] && speedY[i] == ghostY[j] && speedBoost[i] == true)
+            {
+                printf("ghost %d speed change\n", i);
+                ghostCurrentSpeed[j] = 8000;
+                speedBoost[i] = false;
+                currentSpeedGhost[i] = j;
             }
         }
     }
@@ -788,13 +890,12 @@ void keyboard(int key)
     }
 }
 
-void handleKeypress(unsigned char key, int x, int y) 
+void handleKeypress(unsigned char key, int x, int y)
 {
-    if( key == 'p' || key == 'P')
+    if (key == 'p' || key == 'P')
     {
         pauseGame = true;
     }
-    
 }
 
 void movePacman(const char *direction)
@@ -1031,7 +1132,7 @@ bool ifGhostyPacwomanCollision(int i)
             strcpy(ghostMovement[i], "down");
             return false;
         }
-        // currLife--;
+        currLife--;
         return true;
     }
 
@@ -1047,7 +1148,7 @@ bool ifGhostyPacwomanCollision(int i)
             strcpy(ghostMovement[i], "down");
             return false;
         }
-        // currLife--;
+        currLife--;
         return true;
     }
 
@@ -1309,6 +1410,8 @@ void initOpenGL()
     loadTexture("imgs/ghosts/blue_ghost.png", &ghostFrightened);
     loadTexture("imgs/menu/menu.png", &menuBackgroundTextureID);
     loadTexture("imgs/others/score.png", &scoreTexture);
+    loadTexture("imgs/pacman/left1.png", &lifeTexture);
+    loadTexture("imgs/food/speedBoost.png", &SpeedIngredientTexture);
 }
 
 int main(int argc, char **argv)
@@ -1321,8 +1424,6 @@ int main(int argc, char **argv)
     glutCreateWindow("Pacman Game");
     initOpenGL();
 
-    // glutDisplayFunc(display);
-
     glutDisplayFunc(displayMenu);
 
     pthread_mutex_init(&lock, NULL);
@@ -1333,6 +1434,10 @@ int main(int argc, char **argv)
     }
     sem_init(&wrt, 0, 1);
     sem_init(&mutex, 0, 1);
+
+    // sem_init(&customer, 0, 2);
+    sem_init(&seats, 0, 2);
+    sem_init(&customer, 0, 2);
 
     pthread_mutex_init(&mutex1, NULL);
     sem_init(&empty, 0, 4); // Initialize empty semaphore with maximum items
@@ -1365,10 +1470,14 @@ void *userInterfaceThread(void *arg)
 
     while (1)
     {
+
         if (!gameStarted)
         {
             continue;
         }
+
+        checkSpeedBoostEat();
+
         animationtimer--;
         if (animationtimer <= 0)
         {
@@ -1383,6 +1492,14 @@ void *userInterfaceThread(void *arg)
         usleep(5000);
     }
     return NULL;
+}
+
+bool isGhostFast(int i)
+{
+    if (ghostCurrentSpeed[i] == 10000)
+        return false;
+    else
+        return true;
 }
 
 void *ghostThread(void *arg)
@@ -1402,8 +1519,9 @@ void *ghostThread(void *arg)
     {
         if (!gameStarted)
             continue;
-        if(pauseGame)
+        if (pauseGame)
             continue;
+
         float newX = ghostX[i];
         float newY = ghostY[i];
 
@@ -1414,6 +1532,30 @@ void *ghostThread(void *arg)
         }
         else
         {
+            bool checkAlreadySeated = false;
+            for (int j = 0; j < 2; ++j)
+            {
+                if (havingSeat[j] == i)
+                    checkAlreadySeated = true;
+            }
+            if (checkAlreadySeated == false)
+            {
+                if (sem_trywait(&seats) == 0)
+                {
+                    for (int j = 0; j < 2; ++j)
+                    {
+                        if (havingSeat[j] == -1)
+                        {
+                            havingSeat[j] = i;
+                            ghostCurrentSpeed[havingSeat[j]] = 8500;
+                            timerSpeedBoost[j] = 500;
+                            break;
+                        }
+                    }
+                    sitting++;
+                }
+            }
+
             sem_wait(&mutex); // Reader Writer problem Implemented
             readCount++;
 
@@ -1435,7 +1577,6 @@ void *ghostThread(void *arg)
                 gameReset();
                 continue;
             }
-
 
             if (ghostChase[i] == true)
             {
@@ -1528,7 +1669,6 @@ void *ghostThread(void *arg)
                 }
             }
 
-
             if (strcmp(ghostMovement[i], "down") == 0)
             {
 
@@ -1601,14 +1741,12 @@ void *ghostThread(void *arg)
                         changeGhostMovement(i, 0);
                     }
                 }
-
             }
             checkGhostLineOfSight(i);
-
         }
 
         glutPostRedisplay(); // Request redisplay
-        usleep(10000);
+        usleep(ghostCurrentSpeed[i]);
         if (i == 3)
         {
             if (strcmp(ghostMovement[i], "down") != 0 &&
@@ -1636,8 +1774,14 @@ void *gameEngineThread(void *arg)
     {
         if (!gameStarted)
             continue;
-        if(pauseGame)
+
+        if (pauseGame)
             continue;
+
+        if (currLife == 0)
+        {
+            exit(0);
+        }
         float newX = x;
         float newY = y;
         if (delayFlag)
@@ -1742,6 +1886,10 @@ void *gameEngineThread(void *arg)
                 sem_post(&full);
                 powerUp = false;
                 powerUpTimer = -1;
+                for (int i = 0; i < ghostCurrentSpeed[i]; ++i)
+                {
+                    ghostCurrentSpeed[i] = 10000;
+                }
                 for (int i = 0; i < 4; ++i)
                 {
                     ghostChase[i] = false;
@@ -1775,7 +1923,26 @@ void *gameEngineThread(void *arg)
             pthread_mutex_unlock(&mutex1);
         }
 
-        
+        if (sitting > 0)
+        {
+            // printf("checking Timer\n");
+            for (int i = 0; i < 2; ++i)
+            {
+                if (timerSpeedBoost[i] > 0)
+                {
+                    timerSpeedBoost[i] -= 1;
+                    if (timerSpeedBoost[i] == 0)
+                    {
+                        sem_post(&seats);
+                        ghostCurrentSpeed[havingSeat[i]] = 10000;
+                        havingSeat[i] = -1;
+                        timerSpeedBoost[i] = -1;
+                        sitting--;
+                    }
+                }
+            }
+        }
+
         glutPostRedisplay(); // Request redisplay
         usleep(5000);
     }
