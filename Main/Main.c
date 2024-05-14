@@ -45,12 +45,13 @@ GLuint strawberryTexture;
 GLuint appleTexture;
 GLuint ghostFrightened;
 GLuint lifeTexture;
+GLuint pauseTexture;
 
 int ghostCurrentSpeed[4] = {10000, 10000, 10000, 10000};
 bool speedBoost[2] = {true, true};
 int speedX[2] = {20, 555};
 int speedY[2] = {531, 262};
-int speedTimer[2] = {2000, 2000, 2000, 2000};
+int speedTimer[4] = {2000, 2000, 2000, 2000};
 int currentSpeedGhost[2] = {-1, -1};
 
 float x = 280.0f;
@@ -61,7 +62,7 @@ int currLife = 3;
 int LifexPos[3] = {10, 40, 70};
 
 float ghostX[4] = {285, 245, 330, 285};
-float ghostY[4] = {405, 395, 395, 395}; //(285,395)
+float ghostY[4] = {465, 395, 395, 395}; //(285,395)
 bool ghostChase[4] = {false, false, false, false};
 int ghostChaseTimer = -1;
 int numGhost = 4;
@@ -157,6 +158,15 @@ int readCount;
 bool gameStarted = false;
 int menuindex = 0;
 int optionYcoords[2] = {410, 550};
+
+bool pauseGame = false;
+
+sem_t seats;
+sem_t customer;
+int havingSeat[2] = {-1, -1};
+int waitingSeat[2] = {-1, -1};
+int timerSpeedBoost[2] = {-1, -1};
+int sitting = 0;
 
 int currPermit = -1;
 
@@ -427,7 +437,23 @@ void display()
         glEnd();
         glDisable(GL_TEXTURE_2D);
     }
-
+    // pause
+    if (pauseGame == true)
+    {
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, pauseTexture);
+        glBegin(GL_QUADS);
+        glTexCoord2f(0, 0);
+        glVertex2f(565, 12);
+        glTexCoord2f(1, 0);
+        glVertex2f(565 + 30, 12);
+        glTexCoord2f(1, 1);
+        glVertex2f(565 + 30, 12 + (30 * 1.0f));
+        glTexCoord2f(0, 1);
+        glVertex2f(565, 12 + (30 * 1.0f));
+        glEnd();
+        glDisable(GL_TEXTURE_2D);
+    }
     // Draw Fruit on the map
     for (int i = 0; i < fruitCount; ++i)
     {
@@ -705,53 +731,20 @@ void checkPowerupEat()
                 powerUp = true;
                 powerUpTimer = 1500;
                 produceTime = 300;
-                // for (int i = 0; i < 4; ++i)
-                // {
-                //     ghostChase[i] = true;
-                // }
+                for (int i = 0; i < 4; ++i)
+                {
+                    ghostChase[i] = true;
+                }
+                for (int i = 0; i < ghostCurrentSpeed[i]; ++i)
+                {
+                    ghostCurrentSpeed[i] = 12000;
+                }
                 pthread_mutex_unlock(&mutex1);
                 sem_post(&empty);
             }
         }
     }
 }
-
-bool isGhostFast(i)
-{
-    if (ghostCurrentSpeed[i] == 10000)
-        return false;
-    else
-        return true;
-}
-
-// void checkSpeedBoostEat()
-// {
-//     for (int i = 0; i < 2; ++i)
-//     {
-//         if (speedBoost[i] == false)
-//         {
-//             speedTimer[i]--;
-//             if (speedTimer[i] <= 0)
-//             {
-//                 printf("resetting speed of ghost %d\n", i);
-//                 ghostCurrentSpeed[currentSpeedGhost[i]] = 10000;
-//                 // speedBoost[i] = true;
-//                 speedTimer[i] = 2000;
-//             }
-//             continue;
-//         }
-//         for (int j = 0; j < 4; j++)
-//         {
-//             if (speedX[i] == ghostX[j] && speedY[i] == ghostY[j] && speedBoost[i] == true)
-//             {
-//                 printf("ghost %d speed change\n", i);
-//                 ghostCurrentSpeed[j] = 8000;
-//                 speedBoost[i] = false;
-//                 currentSpeedGhost[i] = j;
-//             }
-//         }
-//     }
-// }
 
 void checkFruitEatFunction()
 {
@@ -963,6 +956,18 @@ void keyboard(int key)
     }
 }
 
+void handleKeypress(unsigned char key, int x, int y)
+{
+    if (key == 'p' || key == 'P')
+    {
+        pauseGame = true;
+    }
+    if (key == 'o' || key == 'O')
+    {
+        pauseGame = false;
+    }
+}
+
 void movePacman(const char *direction)
 {
     float newX = x;
@@ -1004,20 +1009,17 @@ void movePacman(const char *direction)
 
 void changeGhostMovement(int ghostNum, int currAxis)
 {
-    srand(time(0));
+    srand(time(0) + (ghostNum * 13));
     if (currAxis == 0)
     {                                // horizontal
         int randomMove = rand() % 2; // 0 is UP, 1 is DOWN, 2 is LEFT, 3 is RIGHT
-        // printf("%d\n", randomMove);
         if (randomMove == 0)
         {
-            // printf("ghost %d trying to move down\n", ghostNum);
             float newX = ghostX[ghostNum];
             float newY = ghostY[ghostNum];
             newY += 1;
             if (isWallCollide(1, newX, newY) == true)
             {
-                // printf("WALL COLLIDE STOP\n");
                 strcpy(ghostMovement[ghostNum], "up");
                 return;
             }
@@ -1026,13 +1028,11 @@ void changeGhostMovement(int ghostNum, int currAxis)
         }
         else if (randomMove == 1)
         {
-            // printf("ghost %d trying to move up\n", ghostNum);
             float newX = ghostX[ghostNum];
             float newY = ghostY[ghostNum];
             newY -= 1;
             if (isWallCollide(1, newX, newY) == true)
             {
-                // printf("WALL COLLIDE STOP\n");
                 strcpy(ghostMovement[ghostNum], "down");
                 return;
             }
@@ -1197,9 +1197,11 @@ bool ifGhostyPacwomanCollision(int i)
     {
         if (powerUp == true)
         {
+            printf("------------------------------------------------\n");
             ghostX[i] = 285;
             ghostY[i] = 395;
             inHouse[i] = true;
+            ghostChase[3] = false;
             strcpy(ghostMovement[i], "down");
             return false;
         }
@@ -1224,9 +1226,11 @@ bool ifGhostyPacwomanCollision(int i)
     {
         if (powerUp == true)
         {
+            printf("------------------------------------------------\n");
             ghostX[i] = 285;
             ghostY[i] = 395;
             inHouse[i] = true;
+            ghostChase[3] = false;
             strcpy(ghostMovement[i], "down");
             return false;
         }
@@ -1502,11 +1506,11 @@ void initOpenGL()
     loadTexture("imgs/food/cherry.png", &appleTexture);
     loadTexture("imgs/food/strawberry.png", &strawberryTexture);
     loadTexture("imgs/ghosts/blue_ghost.png", &ghostFrightened);
-    loadTexture("imgs/ghosts/blue_ghost.png", &ghostFrightened);
     loadTexture("imgs/menu/menu.png", &menuBackgroundTextureID);
     loadTexture("imgs/others/score.png", &scoreTexture);
     loadTexture("imgs/pacman/left1.png", &lifeTexture);
     loadTexture("imgs/food/speedBoost.png", &SpeedIngredientTexture);
+    loadTexture("imgs/others/pause.png", &pauseTexture);
 
     // die animation
     loadTexture("imgs/pacman/die/1.png", &pacmanDieTexture[0]);
@@ -1560,8 +1564,9 @@ int main(int argc, char **argv)
     sem_init(&wrt, 0, 1);
     sem_init(&mutex, 0, 1);
 
-    // semaphore for sleeping barber problem (scenario #4)
-    sem_init(&boostSem, 0, 2);
+    // sem_init(&customer, 0, 2);
+    sem_init(&seats, 0, 2);
+    sem_init(&customer, 0, 2);
 
     pthread_mutex_init(&mutex1, NULL);
     sem_init(&empty, 0, 4); // Initialize empty semaphore with maximum items
@@ -1569,6 +1574,7 @@ int main(int argc, char **argv)
 
     createGrapha();
     printGraph(graph);
+    // print();
 
     int ghostNumber1 = 0;
     int ghostNumber2 = 1;
@@ -1588,7 +1594,7 @@ int main(int argc, char **argv)
 void *userInterfaceThread(void *arg)
 {
     glutSpecialFunc(keyboard);
-
+    glutKeyboardFunc(handleKeypress);
     glutDisplayFunc(displayMenu);
 
     while (1)
@@ -1596,7 +1602,6 @@ void *userInterfaceThread(void *arg)
 
         if (!gameStarted)
         {
-
             continue;
         }
 
@@ -1645,7 +1650,6 @@ void *userInterfaceThread(void *arg)
 void *ghostThread(void *arg)
 {
     int i = *(int *)arg;
-    // printf("i : %d\n", i);
     int firstVertex = -1;
     int secondVertex = -1;
     bool secondReached = false;
@@ -1660,6 +1664,9 @@ void *ghostThread(void *arg)
     {
         if (!gameStarted)
             continue;
+        if (pauseGame)
+            continue;
+
         float newX = ghostX[i];
         float newY = ghostY[i];
 
@@ -1670,6 +1677,30 @@ void *ghostThread(void *arg)
         }
         else
         {
+            bool checkAlreadySeated = false;
+            for (int j = 0; j < 2; ++j)
+            {
+                if (havingSeat[j] == i)
+                    checkAlreadySeated = true;
+            }
+            if (checkAlreadySeated == false)
+            {
+                if (sem_trywait(&seats) == 0)
+                {
+                    for (int j = 0; j < 2; ++j)
+                    {
+                        if (havingSeat[j] == -1)
+                        {
+                            havingSeat[j] = i;
+                            ghostCurrentSpeed[havingSeat[j]] = 8500;
+                            timerSpeedBoost[j] = 500;
+                            break;
+                        }
+                    }
+                    sitting++;
+                }
+            }
+
             sem_wait(&mutex); // Reader Writer problem Implemented
             readCount++;
 
@@ -1696,6 +1727,7 @@ void *ghostThread(void *arg)
 
             if (ghostChase[i] == true)
             {
+
                 if (applyShortedPath == false)
                 {
 
@@ -1726,10 +1758,10 @@ void *ghostThread(void *arg)
                         sem_post(&wrt);
 
                     sem_post(&mutex);
-                    if (!powerUp)
+                    if (powerUp == false)
                         parent = dijkstra(graph, pacmanVertex, ghostVertex);
-                    // else
-                    //     parent = dijkstra_run_away(graph, pacmanVertex, ghostVertex);
+                    else
+                        parent = longestPath(graph, pacmanVertex, ghostVertex);
 
                     secondVertex = -1;
                     int j = 0;
@@ -1777,7 +1809,6 @@ void *ghostThread(void *arg)
                 }
                 if (secondReached == true)
                 {
-                    printf("Second Vertex Reached\n");
                     secondReached = false;
                     applyShortedPath = false;
                     printf("\n\n");
@@ -1787,6 +1818,7 @@ void *ghostThread(void *arg)
 
             if (strcmp(ghostMovement[i], "down") == 0)
             {
+
                 newY += 1;
                 if (isWallCollide(1, newX, newY) == false)
                 {
@@ -1796,12 +1828,16 @@ void *ghostThread(void *arg)
                 }
                 else
                 {
-                    if (ghostChase[i] == false)
+                    if (ghostChase[i] == false || (ghostChase[i] == true && powerUp == true))
+                    {
+                        // printf("ghost %d  chnage movement\n" , i);
                         changeGhostMovement(i, 1);
+                    }
                 }
             }
             else if (strcmp(ghostMovement[i], "up") == 0)
             {
+
                 newY -= 1;
                 if (isWallCollide(1, newX, newY) == false)
                 {
@@ -1811,12 +1847,15 @@ void *ghostThread(void *arg)
                 }
                 else
                 {
-                    if (ghostChase[i] == false)
+                    if (ghostChase[i] == false || (ghostChase[i] == true && powerUp == true))
+                    {
                         changeGhostMovement(i, 1);
+                    }
                 }
             }
             else if (strcmp(ghostMovement[i], "left") == 0)
             {
+
                 newX -= 1;
                 if (isWallCollide(0, newX, newY) == false)
                 {
@@ -1826,12 +1865,15 @@ void *ghostThread(void *arg)
                 }
                 else
                 {
-                    if (ghostChase[i] == false)
+                    if (ghostChase[i] == false || (ghostChase[i] == true && powerUp == true))
+                    {
                         changeGhostMovement(i, 0);
+                    }
                 }
             }
             else if (strcmp(ghostMovement[i], "right") == 0)
             {
+
                 newX += 1;
                 if (isWallCollide(0, newX, newY) == false)
                 {
@@ -1841,8 +1883,10 @@ void *ghostThread(void *arg)
                 }
                 else
                 {
-                    if (ghostChase[i] == false)
+                    if (ghostChase[i] == false || (ghostChase[i] == true && powerUp == true))
+                    {
                         changeGhostMovement(i, 0);
+                    }
                 }
             }
             checkGhostLineOfSight(i);
@@ -1850,6 +1894,16 @@ void *ghostThread(void *arg)
 
         glutPostRedisplay(); // Request redisplay
         usleep(ghostCurrentSpeed[i]);
+        if (i == 3)
+        {
+            if (strcmp(ghostMovement[i], "down") != 0 &&
+                strcmp(ghostMovement[i], "up") != 0 &&
+                strcmp(ghostMovement[i], "left") != 0 &&
+                strcmp(ghostMovement[i], "right") != 0)
+            {
+                strcpy(ghostMovement[i], "down");
+            }
+        }
     }
     pthread_exit(NULL);
 }
@@ -1868,10 +1922,15 @@ void *gameEngineThread(void *arg)
         if (!gameStarted)
             continue;
 
+        if (pauseGame)
+            continue;
+
         if (pacmanStop == true)
         {
             continue;
         }
+        if (score == foodXYSize)
+            exit(0);
         if (currLife == 0)
         {
             exit(0);
@@ -1964,7 +2023,6 @@ void *gameEngineThread(void *arg)
         }
         if (ghostChaseTimer > 0) // ghost case timer when fruit Eat
         {
-            printf("%d\n", ghostChaseTimer);
             ghostChaseTimer--;
             if (ghostChaseTimer == 0)
             {
@@ -1990,6 +2048,10 @@ void *gameEngineThread(void *arg)
                 sem_post(&full);
                 powerUp = false;
                 powerUpTimer = -1;
+                for (int i = 0; i < ghostCurrentSpeed[i]; ++i)
+                {
+                    ghostCurrentSpeed[i] = 10000;
+                }
                 for (int i = 0; i < 4; ++i)
                 {
                     ghostChase[i] = false;
@@ -2023,10 +2085,26 @@ void *gameEngineThread(void *arg)
             pthread_mutex_unlock(&mutex1);
         }
 
-        checkFruitEatFunction();
-        checkPowerupEat();
-        checkTeleport();
-        checkfoodEat();
+        if (sitting > 0)
+        {
+            // printf("checking Timer\n");
+            for (int i = 0; i < 2; ++i)
+            {
+                if (timerSpeedBoost[i] > 0)
+                {
+                    timerSpeedBoost[i] -= 1;
+                    if (timerSpeedBoost[i] == 0)
+                    {
+                        sem_post(&seats);
+                        ghostCurrentSpeed[havingSeat[i]] = 10000;
+                        havingSeat[i] = -1;
+                        timerSpeedBoost[i] = -1;
+                        sitting--;
+                    }
+                }
+            }
+        }
+
         glutPostRedisplay(); // Request redisplay
         usleep(5000);
     }

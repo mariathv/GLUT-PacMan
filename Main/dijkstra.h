@@ -216,29 +216,25 @@ int* dijkstra2(struct Graph *graph, int start, int end)
     return parent;
 }
 
-int* dijkstra_run_away(struct Graph *graph, int start, int avoid)
+int* longestPath(struct Graph *graph, int start, int end)
 {
     int V = graph->V;
     int dist[V];
     bool sptSet[V];
     int *parent = malloc(V * sizeof(int));
     
-    // Initialize distances and parent array
+    // Array to store the longest path tree
     for (int i = 0; i < V; i++)
     {
-        dist[i] = INT_MIN;  // Initialize to INT_MIN to find maximum distance
+        dist[i] = INT_MIN;
         sptSet[i] = false;
         parent[i] = -1;
     }
-    
     dist[start] = 0;
-    
-    // Find the shortest path tree
     for (int count = 0; count < V - 1; count++)
     {
-        int u = maxDistance(dist, sptSet, V);  // Modify minDistance to find maximum distance
+        int u = maxDistance(dist, sptSet, V);
         sptSet[u] = true;
-        
         struct AdjListNode *current = graph->array[u].head;
         while (current != NULL)
         {
@@ -251,6 +247,7 @@ int* dijkstra_run_away(struct Graph *graph, int start, int avoid)
             current = current->next;
         }
     }
-    
+    // Print the longest path if it exists
+
     return parent;
 }
