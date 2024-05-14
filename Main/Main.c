@@ -28,6 +28,7 @@ GLuint pacmanUp[3];
 GLuint backgroundTextureID;
 GLuint foodTextureID;
 GLuint menuBackgroundTextureID;
+GLuint scoreTexture;
 
 GLuint powerupTexture;
 GLuint ghostTextureID[4];
@@ -130,16 +131,7 @@ bool gameStarted = false;
 int menuindex = 0;
 int optionYcoords[2] = {410, 550};
 
-void renderMenu()
-{
-}
-
-bool isWallCollide(bool moveAxis, float xx, float yy);
-
-void menu()
-{
-}
-
+int currPermit = -1;
 void createGrapha()
 {
     size = 66;
@@ -164,7 +156,6 @@ void print()
     for (int i = 0; i < size; ++i)
     {
         printf("index : %d    --- vertex %d         %d\n", i, xCoords[i], yCoords[i]);
-        // printf("index =  %d \n",i );
     }
 }
 
@@ -251,8 +242,8 @@ void loadTexture(const char *filename, GLuint *textureID)
     }
 }
 
-// Function to display the scene
 void displayMenu()
+
 {
     glClear(GL_COLOR_BUFFER_BIT);
     glLoadIdentity();
@@ -311,10 +302,43 @@ void displayMenu()
     glutSwapBuffers();
     glutPostRedisplay();
 }
+
+void renderBitmapString(float x, float y, void *font, const char *string)
+{
+    glRasterPos2f(x, y);
+    while (*string)
+    {
+        // printf("rendering string %s\n", string);
+        glutBitmapCharacter(font, *string);
+        string++;
+    }
+}
 void display()
 {
     glClear(GL_COLOR_BUFFER_BIT);
     glLoadIdentity();
+
+    glPushMatrix();                   // Save the current matrix
+    glTranslatef(10.0f, 10.0f, 0.0f); // Translate the coordinate system
+    glColor3f(2.0f, 1.0f, 1.0f);
+    char buffer[256];
+    sprintf(buffer, "%d", score);
+    renderBitmapString(100.0f, 15.0f, GLUT_BITMAP_TIMES_ROMAN_24, buffer);
+
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, scoreTexture);
+    glBegin(GL_QUADS);
+    glTexCoord2f(0.0f, 1.0f); // Flip the y-coordinate
+    glVertex2f(0.0f, 0.0f);
+    glTexCoord2f(1.0f, 1.0f);
+    glVertex2f(94.0f, 0.0f);
+    glTexCoord2f(1.0f, 0.0f); // Flip the y-coordinate
+    glVertex2f(94.0f, 18.0f);
+    glTexCoord2f(0.0f, 0.0f);
+    glVertex2f(0.0f, 18.0f);
+    glEnd();
+    glPopMatrix();
+    // printf("displaying\n");
 
     // Draw the background map
     glEnable(GL_TEXTURE_2D);
@@ -987,7 +1011,6 @@ bool ifGhostyPacwomanCollision(int i)
     return false;
 }
 
-int currPermit = -1;
 void keyPermitCheck(int i)
 {
     float newX = ghostX[i];
@@ -1147,18 +1170,30 @@ void checkGhostLineOfSight(int i) // function to check if pacman come in line of
 
 void gameReset()
 {
-
-    // for (int i = 0; i < 3; ++i)
-    // {
-    //     if (inHouse == true)
-    //         if (sem_destroy(&exit_permit[i]) != 0)
-    //         {
-    //             perror("Semaphore destruction failed");
-    //             return;
-    //         }
-    // }
+    for (int i = 0; i < 4; i++)
+    {
+        inHouse[i] = true;
+    }
+    for (int i = 0; i < 3; ++i)
+    {
+        if (sem_destroy(&exit_permit[i]) != 0)
+        {
+            perror("Semaphore destruction failed");
+            // Handle error if needed
+            return 1;
+        }
+    }
 
     // Reinitialize the semaphores
+    for (int i = 0; i < 3; ++i)
+    {
+        if (sem_init(&exit_permit[i], 0, 1) != 0)
+        {
+            perror("Semaphore reinitialization failed");
+            // Handle error if needed
+            return;
+        }
+    }
 
     ghostX[0] = 285;
     ghostX[1] = 245;
@@ -1174,51 +1209,24 @@ void gameReset()
         strcpy(ghostMovement[i], "down");
     ghostTimer = 0;
 
-    x = 280.0f;
-    y = 195.0f;
-
-    // for (int i = 0; i < 3; ++i)
-    // {
-    //     if (i == currPermit)
-    //         if (sem_init(&exit_permit[i], 0, 1) != 0)
-    //         {
-    //             perror("Semaphore reinitialization failed");
-    //             return;
-    //         }
-    //         else
-    //         {
-    //             printf("reinitialized %d\n", i + 1);
-    //         }
-    // }
-    for (int i = 0; i < 3; i++)
-    {
-        sem_init(&exit_permit[i], 0, 1);
-    }
-    for (int i = 1; i < 4; i++)
-    {
-        if (i == currPermit)
-        {
-            int left = i - 1;
-            int right = (i) % 3;
-            sem_post(&exit_permit[left]);
-            sem_post(&exit_permit[right]);
-            printf("resetting ; releasing permit held by %d\n", i + 1);
-        }
-    }
+    ghostTimer = 0;
     for (int i = 0; i < 3; i++)
     {
         exit_perm[i] = false;
         key[i] = false;
     }
+    x = 280.0f;
+    y = 195.0f;
 }
 
 void initOpenGL()
 {
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // Set the clear color to opaque black
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluOrtho2D(0, 600, 800, 0);
+    gluOrtho2D(0, 600, 800, 0); // Set up a 2D orthographic projection
     glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -1245,6 +1253,7 @@ void initOpenGL()
     loadTexture("imgs/food/strawberry.png", &strawberryTexture);
     loadTexture("imgs/ghosts/blue_ghost.png", &ghostFrightened);
     loadTexture("imgs/menu/menu.png", &menuBackgroundTextureID);
+    loadTexture("imgs/others/score.png", &scoreTexture);
 }
 
 int main(int argc, char **argv)
