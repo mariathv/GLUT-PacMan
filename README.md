@@ -1,5 +1,26 @@
-## Install SOIL first -    sudo apt-get install libsoil-dev
-## run using command  -   gcc Main.c -o main -lGL -lGLU -lglut -lm -lSOIL 
+## 📂 Project Overview
+
+This project explores the implementation of a **Pac-Man Game** to demonstrate advanced concepts in **Operating Systems**, such as **thread synchronization**, **multi-threading**, and **resource sharing**. The game uses OS principles to manage multiple entities like ghosts and Pac-Man, ensuring smooth and coordinated gameplay.
+
+
+---
+
+## 🛠️ Technology Stack
+
+![Static Badge](https://img.shields.io/badge/GLUT-orange)
+![Static Badge](https://img.shields.io/badge/C-Purple)
+
+<h2>🛠️ Configuration Steps:</h2>
+
+<p>1. Install SOIL first -    sudo apt-get install libsoil-dev</p>
+
+<p>2. run using command  -   gcc Main.c -o main -lGL -lGLU -lglut -lm -lSOIL </p>
+
+-----------------------------------------------------------
+
+
+
+
 
 
 
