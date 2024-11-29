@@ -31,4 +31,4 @@ https://github.com/user-attachments/assets/fd02d0ff-9153-4e83-b993-84a01ac4e315
 
 
 
-[OS Project 2024.pdf](https://github.com/user-attachments/files/17905518/OS.Project.2024.pdf)
+[OS Project 2024.pdf](https://github.com/mariathv/GLUT-PacMan/blob/main/OS.Project.2024.pdf)
